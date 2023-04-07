@@ -60,10 +60,10 @@ class Game:
         self.gameStartButton.lift()
 
 
-        # self.gameBoard.board[4][10] = 2
-        # self.gameBoard.board[6][8] = 2
-        # self.gameBoard.board[12][10] = 2
-        # self.gameBoard.board[14][0] = 2
+        # self.gameBoard.board[4][10] = 0
+        # self.gameBoard.board[6][8] = 0
+        # self.gameBoard.board[12][10] = 0
+        # self.gameBoard.board[14][0] = 0
         # self.gameBoard.board[2][5] = 1
         # self.gameBoard.board[9][6] = 1
         # self.gameBoard.board[11][11] = 1
@@ -88,16 +88,25 @@ class Game:
             
             x = int(self.selectPos[0])
             y = int(self.selectPos[1])
-            if (self.gameBoard.board[y][x] == 0):
-                self.gameBoard.board[y][x] = playerId + 1
+            if (self.gameBoard.board[y][x] == -1):
+                self.gameBoard.board[y][x] = playerId
                 self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(x,y))
                 self.canvas.delete(self.selectBox[self.turn])
+
+                if(self.gameBoard.isPlayerWon(playerId,self.selectPos)):
+                     self.gameWin(playerId)
+                     for i in range(self.numPlayers):
+                          self.players[i].stopTimerCount()
 
                 self.players[self.turn].stopTimerCount()
                 self.turn = (self.turn + 1) % 2
                 self.players[self.turn].startTimerCount()
 
             return
+    
+    def gameWin(self,playerId):
+         print("Player " + str(playerId) + " win!")
+         return
     
     def gameStart(self):
          self.players[self.turn].startTimerCount()
