@@ -29,18 +29,16 @@ class Board:
         return np.rint(pos).tolist()
     
     def displayStone(self, canvas, playerId, coord):
-        if playerId==1:
+        if playerId==0:
             self.stoneImgList.append(PhotoImage(file=self.blackImgPath))
-        elif playerId==2:
+        elif playerId==1:
             self.stoneImgList.append(PhotoImage(file=self.whiteImgPath))
         canvas.create_image(coord,image=self.stoneImgList[len(self.stoneImgList)-1])
     
     def displayBoard(self, canvas):
         self.boardImg.append(PhotoImage(file=self.boardImgPath))
         canvas.create_image(310,310,image=self.boardImg)
-        #time.sleep(0.5)
 
-        #count = 0
         for y in range(self.size):
             for x in range(self.size):
                 if self.board[y][x]==0:
