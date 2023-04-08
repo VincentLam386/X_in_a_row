@@ -3,48 +3,114 @@ from tkinter import PhotoImage
 from enum import Enum
 
 class Board:
+    """
+    A class to represent the gameboard
+
+    Attributes
+    ----------
+
+
+
+
+    Methods
+    -------
+
+    
+    
+
+    
+    """
+
     class Direction(Enum):
         VERTICAL = 0
         HORIZONTAL = 1
         DOWNHILL = 2
         UPHILL = 3
 
-    def __init__(self, size):
-        self.pxSize = 571
-        self.size = size
-        self.pxStep = self.pxSize / (self.size - 1)
-        self.boardImgPath = "img/board.png"
-        self.whiteImgPath = "img/white.png"
-        self.blackImgPath = "img/black.png"
-        self.startCoord = np.asarray([21,23])
-        self.board = np.ones([size,size])*-1
+    __pxSize = 571
+    __boardImgPath = "img/board.png"
+    __whiteImgPath = "img/white.png"
+    __blackImgPath = "img/black.png"
+    __boardImgStartCoord = np.asarray([21,23])
+
+    def __init__(self, size, winRequirement):
+        if (size<3):
+            raise ValueError(f"Board size must be at least 3. Input size = {size}")
+        self._size = size
+        self._pxStep = Board.__pxSize / (self.size - 1)
+        
+        self._board = np.ones([size,size])*-1
         self.boardImg = []
         self.stoneImgList = []
 
-        self.winTarget = 5
+        if (winRequirement < 3):
+            raise ValueError(f"Win requirement must be at least 3. Input win requirement = {winRequirement}")
+        if (size < winRequirement):
+            raise ValueError(f"Win requirement must be smaller than gameboard size. Input size = {size}, winRequirement = {winRequirement}")
+        self._winTarget = winRequirement
         return
+    
+    @property
+    def size(self):
+        return self._size
+    
+    @size.setter
+    def size(self,size):
+        if (size<3):
+            raise ValueError(f"Board size must be at least 3. Input size = {size}")
+        self._size = size
+        return
+    
+    @property
+    def winTarget(self):
+        return self._winTarget
+    
+    @winTarget.setter
+    def winTarget(self,winRequirement):
+        if (winRequirement < 3):
+            raise ValueError(f"Win requirement must be at least 3. Input win requirement = {winRequirement}")
+        if (self.size < winRequirement):
+            raise ValueError(f"Win requirement must be smaller than gameboard size. Input size = {size}, winRequirement = {winRequirement}")
+        self._winTarget = winRequirement
+        return
+    
+    @property
+    def board(self):
+        return self._board
+    
+    def __str__(self):
+        return f"""
+        Gameboard:
+            Size: {self.size} x {self.size} grids
+            Win requirement: {self.winTarget} consecutive stones
+        """
+    
+    def __repr__(self):
+        return f"Board(size='{self.size}', winTarget='{self.winTarget}')"
+
 
     def getNextMove(self, playerId):
         # computer player next move
         return
     
     def boardPos2Coord(self,x,y):
-        coord = self.startCoord + np.asarray([x,y]) * self.pxStep
+        coord = Board.__boardImgStartCoord + np.asarray([x,y]) * self._pxStep
         return coord.tolist()
     
     def coord2BoardPos(self,coord):
-        pos = (np.asarray(coord) - self.startCoord) / self.pxStep
+        pos = (np.asarray(coord) - Board.__boardImgStartCoord) / self._pxStep
         return np.rint(pos).tolist()
     
     def displayStone(self, canvas, playerId, coord):
         if playerId==0:
-            self.stoneImgList.append(PhotoImage(file=self.blackImgPath))
+            self.stoneImgList.append(PhotoImage(file=Board.__blackImgPath))
         elif playerId==1:
-            self.stoneImgList.append(PhotoImage(file=self.whiteImgPath))
+            self.stoneImgList.append(PhotoImage(file=Board.__whiteImgPath))
         canvas.create_image(coord,image=self.stoneImgList[len(self.stoneImgList)-1])
-    
+        return
+
     def displayBoard(self, canvas):
-        self.boardImg.append(PhotoImage(file=self.boardImgPath))
+        self.boardImg.append(PhotoImage(file=Board.__boardImgPath))
         canvas.create_image(310,310,image=self.boardImg)
 
         for y in range(self.size):
@@ -52,10 +118,9 @@ class Board:
                 if self.board[y][x]==-1:
                      continue
                 self.displayStone(canvas,self.board[y][x],self.boardPos2Coord(x,y))
-
         return
     
-    def getDirArrayAndPos(self,dir,curPos,addCheck):
+    def _getDirArrayAndPos(self,dir,curPos,addCheck):
         size = self.size
         extendLen = self.winTarget+addCheck
         arr = None
@@ -96,17 +161,20 @@ class Board:
 
         return [arr,pos]
     
-    def isNConnected(self,arr,playerId,pos):
-        if (arr.size < self.winTarget):
+    @classmethod
+    def _isNConnected(self,arr,playerId,pos,n):
+        if (arr.size < n):
             return False
         
         connected = 0
-        for i in range(arr.size):
+        checkStart = max(0,pos - n + 1)
+        checkEnd = min(pos + n,arr.size)
+        for i in range(checkStart,checkEnd):
             if(arr[i]==playerId):
                 connected = connected + 1
             else:
                 connected = 0
-            if(connected==self.winTarget):
+            if(connected==n):
                 return True
 
         return False
@@ -114,62 +182,23 @@ class Board:
     def isPlayerWon(self,playerId,lastPlayCoord):
         # Check 4 directions, each direction check +/- self.winTarget-1, total 2*self.winTarget-2 cells
         # 1. top-to-bottom
-        arr,_ = self.getDirArrayAndPos(Board.Direction.VERTICAL,lastPlayCoord,0)
-        if(self.isNConnected(arr,playerId,lastPlayCoord)):  
+        arr,pos = self._getDirArrayAndPos(Board.Direction.VERTICAL,lastPlayCoord,0)
+        if(Board._isNConnected(arr,playerId,pos,self.winTarget)):  
             return True
         
         # 2. left-to-right
-        arr,_ = self.getDirArrayAndPos(Board.Direction.HORIZONTAL,lastPlayCoord,0)
-        if(self.isNConnected(arr,playerId,lastPlayCoord)):  
+        arr,pos = self._getDirArrayAndPos(Board.Direction.HORIZONTAL,lastPlayCoord,0)
+        if(Board._isNConnected(arr,playerId,pos,self.winTarget)):  
             return True
         
         # 3. top-left-to-bottom-right
-        arr,_ = self.getDirArrayAndPos(Board.Direction.DOWNHILL,lastPlayCoord,0)
-        if(self.isNConnected(arr,playerId,lastPlayCoord)):  
+        arr,pos = self._getDirArrayAndPos(Board.Direction.DOWNHILL,lastPlayCoord,0)
+        if(Board._isNConnected(arr,playerId,pos,self.winTarget)):  
             return True
         
         # 4. bottom-left-to-top-right
-        arr,_ = self.getDirArrayAndPos(Board.Direction.UPHILL,lastPlayCoord,0)
-        if(self.isNConnected(arr,playerId,lastPlayCoord)):  
+        arr,pos = self._getDirArrayAndPos(Board.Direction.UPHILL,lastPlayCoord,0)
+        if(Board._isNConnected(arr,playerId,pos,self.winTarget)):  
             return True
       
         return False   
-
-    
-# def getDir(dir,curPos,win,addi):
-#     size = 10
-#     winTarget = win+addi
-#     arr = None
-#     pos = -1
-#     start = 0
-#     end = size
-#     if (dir == 0):
-#         arr = a[:,curPos[0]] # extract whole column
-#         pos = curPos[1]
-#     elif (dir == 1):
-#         arr = a[curPos[1],:] # extract whole row
-#         pos = curPos[0]
-#     elif (dir == 2):
-#         diff = curPos[1]-curPos[0]
-#         startX = max(0,-diff)
-#         startY = max(0,diff)
-#         arrSize = size - abs(diff)
-#         arr = np.empty(arrSize)
-#         for i in range(arrSize):
-#             arr[i] = a[startY+i][startX+i]
-#         pos = curPos[0] - startX
-#     elif (dir == 3):
-#         yDiff = size - 1 - curPos[1]
-#         startX = max(0,curPos[0] - yDiff)
-#         startY = min(size-1,curPos[0]+curPos[1])
-#         arrSize = abs(startX-startY)+1
-#         arr = np.empty(arrSize)
-#         for i in range(arrSize):
-#             arr[i] = a[startY-i][startX+i]
-#         pos = curPos[0] - startX
-#     start = max(0,pos-winTarget+1)
-#     end = min(size,pos+winTarget)
-#     arr = arr[start:end]
-#     pos = pos - start
-#     return [arr,pos]
-
