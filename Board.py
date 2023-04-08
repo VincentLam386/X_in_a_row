@@ -70,7 +70,7 @@ class Board:
         if (winRequirement < 3):
             raise ValueError(f"Win requirement must be at least 3. Input win requirement = {winRequirement}")
         if (self.size < winRequirement):
-            raise ValueError(f"Win requirement must be smaller than gameboard size. Input size = {size}, winRequirement = {winRequirement}")
+            raise ValueError(f"Win requirement must be smaller than gameboard size. Input size = {self.size}, winRequirement = {winRequirement}")
         self._winTarget = winRequirement
         return
     
