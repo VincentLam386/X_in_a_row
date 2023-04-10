@@ -22,6 +22,8 @@ class Timer:
     
     
     """
+    timerStep = 0.5
+
     def __init__(self, maxTime, addTime, timerId):
         if (maxTime<0):
             raise ValueError(f"Time must be positive. Input maxTime = {maxTime}")
@@ -33,7 +35,6 @@ class Timer:
 
         self.timerBar = ttk.Progressbar()
 
-        self._startCountEvent = Event()
         self._styleName = 'text.Horizontal.TProgressbar' + str(timerId)
         self._style = ttk.Style()
         self._style.layout(self._styleName,
@@ -43,6 +44,16 @@ class Timer:
                 'sticky': 'nswe'}),
               ('Horizontal.Progressbar.label', {'sticky': ''})])
         self._style.configure(self._styleName, text="{:.1f}".format(self.maxTime))
+
+        self._timeOutEvent = Event()
+        self._pauseEvent = Event()
+        #self._countingEvent = Event()
+        #self._countingEvent.set()
+
+        self.countDownThread = Thread(target=self.countDown)
+        self.countDownThread.start()
+
+        self._stopThreadFlag = False       
         return
     
     @property
@@ -81,30 +92,27 @@ class Timer:
     def initTimerBar(self, frame, length):
         self.timerBar = ttk.Progressbar(frame, orient="horizontal", mode="determinate", 
                                         style=self._styleName, length=length, maximum=self.maxTime)
-        self.timerBar['value'] = self.maxTime
+        self.resetTimer()
         return
     
-    def startThread(self):
-        t1 = Thread(target=self.countDown)
-        t1.start()
-        return
-    
-    def startCountDown(self):
-        self._startCountEvent.set()
-        return
-    
-    def stopCountDown(self):
-        self._startCountEvent.clear()
+    def addCountDownTime(self):
         self._time = self._time + self.addTime
         self.updateTimerBar()
         return
     
     def countDown(self):
-        while(self._time > 0):
-            self._startCountEvent.wait()
-            time.sleep(0.1)
-            self._time = self._time - 0.1
+        while(not self._stopThreadFlag):
+            self._pauseEvent.wait()
+            #self._countingEvent.clear()
+            time.sleep(Timer.timerStep)
+            self._time = self._time - Timer.timerStep
             self.updateTimerBar()
+            if(self.isNoTime()):
+                self._timeOutEvent.set()
+                self.pauseTimer()
+
+            #self._countingEvent.set()
+            
         return
 
     def updateTimerBar(self):
@@ -114,4 +122,41 @@ class Timer:
         else:
             self.timerBar['value'] = self._time
         return
+    
+    def isNoTime(self):
+        return (self._time < (Timer.timerStep/2))
+    
+    def waitAndResetTimeOutEvent(self):
+        self._timeOutEvent.wait()
+        self._timeOutEvent.clear()
+        return
+    
+    def resetTimer(self):
+        #self._countingEvent.wait()
+        self._time = self.maxTime
+        self.timerBar['value'] = self._time
+        self._style.configure(self._styleName, text="{:.1f}".format(self._time))
+        self._timeOutEvent.clear()
+        self.pauseTimer()
+        return
+    
+    def pauseTimer(self):
+        self._pauseEvent.clear()
+        return
+    
+    def resumeTimer(self):
+        self._pauseEvent.set()
+        return
+    
+    # def startTimer(self):
+    #     self.countDownThread.start()
+    #     return
+    
+    # def stopTimer(self):
+    #     self._stopThreadFlag = True
+    #     return
+    
+    # def waitThreadFinish(self):
+    #     self.countDownThread.join()
+    #     return
 

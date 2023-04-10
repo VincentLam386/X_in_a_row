@@ -1,10 +1,12 @@
 from tkinter import *
 import tkinter.font as font
 from tkinter import ttk
-import numpy as np
 from Board import Board
 from Player import Player
 from threading import *
+
+from Timer import Timer
+import time
 
 class Game:
      """
@@ -29,11 +31,11 @@ class Game:
     
      __numPlayers = 2
      __selectBoxImgPath = ["img/box1.png","img/box2.png"]
-     
-
 
      def __init__(self, boardSize, winRequirement, timeLimit, addTime):
           self.winRequirement = winRequirement
+          self.isGameQuit = False
+          self.winPlayer = -1
 
           self.root = Tk()
           self.frm = ttk.Frame(self.root, width=700, height=650, padding=10)
@@ -55,7 +57,6 @@ class Game:
                          command=lambda info=self.players[i].id:self.placeStone(info)))
                
                self.players[i].initTimerBar(self.frm,600)
-               self.players[i].startTimerThread()
           
           self.gameStartButton = Button(self.frm, text="Game Start!", width=20, command=self.gameStart)
           self.gameStartButton['font'] = font.Font(family='Helvetica',size=30,weight="bold")
@@ -63,6 +64,8 @@ class Game:
           self.turn = 0
 
           self.initView()
+          self.startCheckTimeOutThread()
+          self.resetGame()
           return
      
      def __str__(self):
@@ -95,8 +98,8 @@ Game:
           self.gameStartButton.lift()
 
 
-          # self.gameBoard.board[4][10] = 0
-          # self.gameBoard.board[6][8] = 0
+          #self.gameBoard.board[4][10] = 0
+          #self.gameBoard.board[5][10] = 0
           # self.gameBoard.board[12][10] = 0
           # self.gameBoard.board[14][0] = 0
           # self.gameBoard.board[2][5] = 1
@@ -130,29 +133,80 @@ Game:
                self.canvas.delete(self.selectBox[self.turn])
 
                if(self.gameBoard.isPlayerWon(playerId,self.selectPos)):
-                    self.gameWin(playerId)
-                    for i in range(Game.__numPlayers):
-                         self.players[i].stopTimerCount()
+                    self.winPlayer = playerId
+                    self.gameFinish()
+                    return
 
-               self.players[self.turn].stopTimerCount()
-               self.turn = (self.turn + 1) % 2
-               self.players[self.turn].startTimerCount()
+               self.switchPlayers()
 
           return
-    
-     def gameWin(self,playerId):
-         print("Player " + str(playerId) + " win!")
-         return
+     
+     def switchPlayers(self):
+          self.players[self.turn].pauseTimer()
+          self.players[self.turn].addTimerCount()
+          self.turn = (self.turn + 1) % 2
+          self.players[self.turn].resumeTimer()
+          return
+     
+
+     def startCheckTimeOutThread(self):
+          for i in range(Game.__numPlayers):
+               thread = Thread(target=lambda id=self.players[i].id:self.timeOut(id))
+               thread.start()
+          return
+     
+     def timeOut(self,id):
+          nextId = (id + 1) % 2
+          while(not self.isGameQuit):
+               self.players[id].timer.waitAndResetTimeOutEvent()
+               self.canvas.delete(self.selectBox[id])
+
+               self.players[id].pauseTimer()
+               self.players[id].addTimerCount()
+
+               if(self.players[nextId].timer.isNoTime()):
+                    self.gameFinish()
+                    continue
+
+               self.turn = nextId
+               self.players[nextId].resumeTimer()
+
+          return
+     
+     def resetGame(self):
+          time.sleep(2*Timer.timerStep) # temporary solution to last player timer still counting, leading to reduced maxtime
+          
+          self.winPlayer = -1
+          self.gameStartButton.grid()
+          for i in range(Game.__numPlayers):
+               self.players[i].resetTimer()
+               self.playersButton[i]['state'] = DISABLED
+          return
+
     
      def gameStart(self):
-         self.players[self.turn].startTimerCount()
-         self.gameStartButton.grid_forget()
+          self.players[self.turn].resumeTimer()
+          self.gameStartButton.grid_remove()
+          for i in range(Game.__numPlayers):
+               self.playersButton[i]['state'] = NORMAL
 
-         return
+          return
+     
+     def gameFinish(self):
+          for i in range(Game.__numPlayers):
+               self.players[i].pauseTimer()
+          if(self.winPlayer == -1):
+               print("Game is tie.")
+          else:
+               print("Player " + str(self.winPlayer) + " win!")
+
+          self.resetGame()
+
+          return
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=60,addTime=3)
+game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5)
 #print(repr(game))
 #print(game)
 game.root.mainloop()

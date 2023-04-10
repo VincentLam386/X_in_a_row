@@ -42,16 +42,20 @@ class Player:
     def getTimerBar(self):
         return self.timer.timerBar
     
-    def startTimerThread(self):
-        self.timer.startThread()
+    def addTimerCount(self):
+        self.timer.addCountDownTime()
         return
     
-    def startTimerCount(self):
-        self.timer.startCountDown()
+    def pauseTimer(self):
+        self.timer.pauseTimer()
         return
     
-    def stopTimerCount(self):
-        self.timer.stopCountDown()
+    def resumeTimer(self):
+        self.timer.resumeTimer()
+        return
+    
+    def resetTimer(self):
+        self.timer.resetTimer()
         return
 
 
