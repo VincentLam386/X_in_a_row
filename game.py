@@ -5,9 +5,6 @@ from Board import Board
 from Player import Player
 from threading import *
 
-from Timer import Timer
-import time
-
 class Game:
      """
      A class to represent the gomoku game
@@ -207,6 +204,7 @@ Game:
      def resetGame(self):
           self.turn = 0
           self.winPlayer = -1
+          self.gameBoard.clearBoard(self.canvas)
           self.msgFrm.grid()
           for i in range(Game.__numPlayers):
                self.players[i].getTimer().resetTimer()

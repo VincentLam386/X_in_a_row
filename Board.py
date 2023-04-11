@@ -40,7 +40,7 @@ class Board:
         self._pxStep = Board.__pxSize / (self.size - 1)
         
         self._board = np.ones([size,size])*-1
-        self.boardImg = []
+        self.boardImg = PhotoImage(file=Board.__boardImgPath)
         self.stoneImgList = []
 
         if (winRequirement < 3):
@@ -107,7 +107,6 @@ class Board:
         return
 
     def displayBoard(self, canvas):
-        self.boardImg.append(PhotoImage(file=Board.__boardImgPath))
         canvas.create_image(310,310,image=self.boardImg)
 
         for y in range(self.size):
@@ -115,6 +114,12 @@ class Board:
                 if self.board[y][x]==-1:
                      continue
                 self.displayStone(canvas,self.board[y][x],self.boardPos2Coord(x,y))
+        return
+    
+    def _clearBoardDisplay(self,canvas):
+        canvas.delete()
+        self.stoneImgList.clear()
+        self.displayBoard(canvas)
         return
 
 # utilities
@@ -202,6 +207,12 @@ class Board:
       
         return False   
     
+    def clearBoard(self,canvas):
+        self._board = np.ones([self.size,self.size])*-1
+        self._clearBoardDisplay(canvas)
+
+        return
+    
     def ruleRenjuBoard(self):
         # prohibit black 3-and-3, 4-and-4, overline
 
@@ -214,6 +225,6 @@ class Board:
 # computer player
     def getNextMove(self, playerId):
         # computer player next move
-        
+
         return
     
