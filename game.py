@@ -129,6 +129,7 @@ Game:
           y = int(self.selectPos[1])
           if (self.gameBoard.board[y][x] == -1):
                self.gameBoard.board[y][x] = playerId
+               self.players[self.turn].timer.setSkipTimeFlag()
                self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(x,y))
                self.canvas.delete(self.selectBox[self.turn])
 
@@ -164,18 +165,20 @@ Game:
                self.players[id].pauseTimer()
                self.players[id].addTimerCount()
 
+               self.turn = nextId
+               self.players[nextId].resumeTimer()
+
                if(self.players[nextId].timer.isNoTime()):
                     self.gameFinish()
                     continue
 
-               self.turn = nextId
-               self.players[nextId].resumeTimer()
+               
 
           return
      
      def resetGame(self):
           time.sleep(2*Timer.timerStep) # temporary solution to last player timer still counting, leading to reduced maxtime
-          
+          self.turn = 0
           self.winPlayer = -1
           self.gameStartButton.grid()
           for i in range(Game.__numPlayers):
@@ -206,7 +209,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5)
+game = Game(boardSize=15,winRequirement=5,timeLimit=3,addTime=0)
 #print(repr(game))
 #print(game)
 game.root.mainloop()

@@ -53,7 +53,8 @@ class Timer:
         self.countDownThread = Thread(target=self.countDown)
         self.countDownThread.start()
 
-        self._stopThreadFlag = False       
+        self._stopThreadFlag = False  
+        self._skipTimeFlag = False     
         return
     
     @property
@@ -105,11 +106,14 @@ class Timer:
             self._pauseEvent.wait()
             #self._countingEvent.clear()
             time.sleep(Timer.timerStep)
-            self._time = self._time - Timer.timerStep
-            self.updateTimerBar()
-            if(self.isNoTime()):
-                self._timeOutEvent.set()
-                self.pauseTimer()
+            if(not self._skipTimeFlag):
+                self._time = self._time - Timer.timerStep
+                self.updateTimerBar()
+                if(self.isNoTime()):
+                    self._timeOutEvent.set()
+                    self.pauseTimer()
+            else:
+                self._skipTimeFlag = False
 
             #self._countingEvent.set()
             
@@ -146,6 +150,10 @@ class Timer:
     
     def resumeTimer(self):
         self._pauseEvent.set()
+        return
+    
+    def setSkipTimeFlag(self):
+        self._skipTimeFlag = True
         return
     
     # def startTimer(self):
