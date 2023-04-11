@@ -22,7 +22,7 @@ class Timer:
     
     
     """
-    timerStep = 0.5
+    timerStep = 0.1
     __eventTimeOut = 1
 
     def __init__(self, maxTime, addTime, timerId):
@@ -91,52 +91,12 @@ class Timer:
     def __repr__(self):
         return f"Timer(maxTime='{self.maxTime}', time='{self._time}', addTime='{self.addTime}')"
 
+# setup timer
     def initTimerBar(self, frame, length):
         self.timerBar = ttk.Progressbar(frame, orient="horizontal", mode="determinate", 
                                         style=self._styleName, length=length, maximum=self.maxTime)
         self.resetTimer()
         return
-    
-    def addCountDownTime(self):
-        self._time = self._time + self.addTime
-        self.updateTimerBar()
-        return
-    
-    def countDown(self):
-        while(not self._stopThreadFlag):
-            self._pauseEvent.wait(Timer.__eventTimeOut)
-            if(self._pauseEvent.is_set()):
-                self._countingEvent.clear()
-                time.sleep(Timer.timerStep)
-                if(not self._skipTimeFlag):
-                    self._time = self._time - Timer.timerStep
-                    self.updateTimerBar()
-                    if(self.isNoTime()):
-                        self._timeOutEvent.set()
-                        self.pauseTimer()
-                else:
-                    self._skipTimeFlag = False
-
-                self._countingEvent.set()
-            
-        return
-
-    def updateTimerBar(self):
-        self._style.configure(self._styleName, text="{:.1f}".format(self._time))
-        if(self._time >= self.maxTime):
-            self.timerBar['value'] = self.maxTime
-        else:
-            self.timerBar['value'] = self._time
-        return
-    
-    def isNoTime(self):
-        return (self._time < (Timer.timerStep/2))
-    
-    def waitAndResetTimeOutEvent(self):
-        success = self._timeOutEvent.wait(Timer.__eventTimeOut)
-        if (self._timeOutEvent.is_set()):
-            self._timeOutEvent.clear()
-        return success
     
     def resetTimer(self):
         self._countingEvent.wait()
@@ -147,6 +107,50 @@ class Timer:
         self.pauseTimer()
         return
     
+# main timer count functions
+    def _updateTimerBar(self):
+        self._style.configure(self._styleName, text="{:.1f}".format(self._time))
+        if(self._time >= self.maxTime):
+            self.timerBar['value'] = self.maxTime
+        else:
+            self.timerBar['value'] = self._time
+        return
+    
+    def addCountDownTime(self):
+        self._time = self._time + self.addTime
+        self._updateTimerBar()
+        return
+    
+    def countDown(self):
+        while(not self._stopThreadFlag):
+            self._pauseEvent.wait(Timer.__eventTimeOut)
+            if(self._pauseEvent.is_set()):
+                self._countingEvent.clear()
+                time.sleep(Timer.timerStep)
+                if(not self._skipTimeFlag):
+                    self._time = self._time - Timer.timerStep
+                    self._updateTimerBar()
+                    if(self.isNoTime()):
+                        self._timeOutEvent.set()
+                        self.pauseTimer()
+                else:
+                    self._skipTimeFlag = False
+
+                self._countingEvent.set()
+            
+        return
+    
+# for checking time out
+    def isNoTime(self):
+        return (self._time < (Timer.timerStep/2))
+    
+    def waitAndResetTimeOutEvent(self):
+        success = self._timeOutEvent.wait(Timer.__eventTimeOut)
+        if (self._timeOutEvent.is_set()):
+            self._timeOutEvent.clear()
+        return success
+    
+# for pausing, resuming the timer during switch hands / timeout
     def pauseTimer(self):
         self._pauseEvent.clear()
         return
@@ -159,10 +163,7 @@ class Timer:
         self._skipTimeFlag = True
         return
     
-    # def startTimer(self):
-    #     self.countDownThread.start()
-    #     return
-    
+# for stopping the timer
     def stopTimer(self):
         self._stopThreadFlag = True
         return

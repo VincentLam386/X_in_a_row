@@ -61,7 +61,7 @@ class Game:
                          fg="green" if(i==0) else "red", 
                          command=lambda info=self.players[i].id:self.placeStone(info)))
                
-               self.players[i].initTimerBar(self.frm,600)
+               self.players[i].getTimer().initTimerBar(self.frm,600)
 
           self.msgFrm = Frame(self.frm,bg="grey",padx=10,pady=10)
           
@@ -155,7 +155,7 @@ Game:
           y = int(self.selectPos[1])
           if (self.gameBoard.board[y][x] == -1):
                self.gameBoard.board[y][x] = playerId
-               self.players[self.turn].timer.setSkipTimeFlag()
+               self.players[self.turn].getTimer().setSkipTimeFlag()
                self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(x,y))
                self.canvas.delete(self.selectBox[self.turn])
 
@@ -169,25 +169,25 @@ Game:
           return
      
      def switchPlayers(self):
-          self.players[self.turn].pauseTimer()
-          self.players[self.turn].addTimerCount()
+          self.players[self.turn].getTimer().pauseTimer()
+          self.players[self.turn].getTimer().addCountDownTime()
           self.turn = (self.turn + 1) % 2
-          self.players[self.turn].resumeTimer()
+          self.players[self.turn].getTimer().resumeTimer()
           return
      
      def timeOut(self,id):
           nextId = (id + 1) % 2
           while(not self.isGameQuit):
-               if(self.players[id].timer.waitAndResetTimeOutEvent()):
+               if(self.players[id].getTimer().waitAndResetTimeOutEvent()):
                     self.canvas.delete(self.selectBox[id])
 
-                    self.players[id].pauseTimer()
-                    self.players[id].addTimerCount()
+                    self.players[id].getTimer().pauseTimer()
+                    self.players[id].getTimer().addCountDownTime()
 
                     self.turn = nextId
-                    self.players[nextId].resumeTimer()
+                    self.players[nextId].getTimer().resumeTimer()
 
-                    if(self.players[nextId].timer.isNoTime()):
+                    if(self.players[nextId].getTimer().isNoTime()):
                          self.gameFinish()
                          continue
           return
@@ -197,13 +197,13 @@ Game:
           self.winPlayer = -1
           self.msgFrm.grid()
           for i in range(Game.__numPlayers):
-               self.players[i].resetTimer()
+               self.players[i].getTimer().resetTimer()
                self.playersButton[i]['state'] = DISABLED
           return
 
     
      def gameStart(self):
-          self.players[self.turn].resumeTimer()
+          self.players[self.turn].getTimer().resumeTimer()
           self.msgFrm.grid_remove()
           for i in range(Game.__numPlayers):
                self.playersButton[i]['state'] = NORMAL
@@ -212,7 +212,7 @@ Game:
      
      def gameFinish(self):
           for i in range(Game.__numPlayers):
-               self.players[i].pauseTimer()
+               self.players[i].getTimer().pauseTimer()
           if(self.winPlayer == -1):
                print("Game is tie.")
                self.gameFinishMsg.set(Game.__tieGameMsg)
@@ -227,9 +227,8 @@ Game:
      def quit(self):
           self.isGameQuit = True
           for i in range(Game.__numPlayers):
-               #self.players[i].timer._timeOutEvent.set()
-               self.players[i].timer.stopTimer()
-               self.players[i].timer.waitThreadFinish()
+               self.players[i].getTimer().stopTimer()
+               self.players[i].getTimer().waitThreadFinish()
                self.timeOutThreads[i].join()
 
           self.root.destroy()
@@ -238,7 +237,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=3,timeLimit=3,addTime=0)
+game = Game(boardSize=15,winRequirement=5,timeLimit=3,addTime=0)
 #print(repr(game))
 #print(game)
 game.root.mainloop()
