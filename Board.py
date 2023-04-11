@@ -88,11 +88,7 @@ class Board:
     def __repr__(self):
         return f"Board(size='{self.size}', winTarget='{self.winTarget}')"
 
-
-    def getNextMove(self, playerId):
-        # computer player next move
-        return
-    
+# Getting coordinates
     def boardPos2Coord(self,x,y):
         coord = Board.__boardImgStartCoord + np.asarray([x,y]) * self._pxStep
         return coord.tolist()
@@ -101,6 +97,7 @@ class Board:
         pos = (np.asarray(coord) - Board.__boardImgStartCoord) / self._pxStep
         return np.rint(pos).tolist()
     
+# display graphics
     def displayStone(self, canvas, playerId, coord):
         if playerId==0:
             self.stoneImgList.append(PhotoImage(file=Board.__blackImgPath))
@@ -119,7 +116,8 @@ class Board:
                      continue
                 self.displayStone(canvas,self.board[y][x],self.boardPos2Coord(x,y))
         return
-    
+
+# utilities
     def _getDirArrayAndPos(self,dir,curPos,addCheck):
         size = self.size
         extendLen = self.winTarget+addCheck
@@ -179,6 +177,7 @@ class Board:
 
         return False
     
+# main game logics 
     def isPlayerWon(self,playerId,lastPlayCoord):
         # Check 4 directions, each direction check +/- self.winTarget-1, total 2*self.winTarget-2 cells
         # 1. top-to-bottom
@@ -202,3 +201,19 @@ class Board:
             return True
       
         return False   
+    
+    def ruleRenjuBoard(self):
+        # prohibit black 3-and-3, 4-and-4, overline
+
+        return
+    
+    def ruleSwap2Board(self):
+
+        return
+
+# computer player
+    def getNextMove(self, playerId):
+        # computer player next move
+        
+        return
+    

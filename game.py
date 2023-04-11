@@ -100,6 +100,7 @@ Game:
      def __repr__(self):
           return f"Game(gameBoard={repr(self.gameBoard)}, players=[{repr(self.players[0])}, {repr(self.players[1])}])"
 
+# view
      def initView(self):
           self.root.geometry("800x750")
           
@@ -136,6 +137,7 @@ Game:
           self.gameBoard.displayBoard(self.canvas)
           return
 
+# UI button functions
      def onBoardClick(self,event):
           if (self.selectBox[self.turn] != None):
                self.canvas.delete(self.selectBox[self.turn])
@@ -168,6 +170,16 @@ Game:
 
           return
      
+# rules (to be implemented)
+     def ruleRenju(self):
+
+          return
+     
+     def ruleSwap2(self):
+
+          return
+     
+# main game logics
      def switchPlayers(self):
           self.players[self.turn].getTimer().pauseTimer()
           self.players[self.turn].getTimer().addCountDownTime()
@@ -237,7 +249,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=3,addTime=0)
+game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5)
 #print(repr(game))
 #print(game)
 game.root.mainloop()
