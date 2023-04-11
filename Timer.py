@@ -23,6 +23,7 @@ class Timer:
     
     """
     timerStep = 0.5
+    __eventTimeOut = 1
 
     def __init__(self, maxTime, addTime, timerId):
         if (maxTime<0):
@@ -47,8 +48,8 @@ class Timer:
 
         self._timeOutEvent = Event()
         self._pauseEvent = Event()
-        #self._countingEvent = Event()
-        #self._countingEvent.set()
+        self._countingEvent = Event()
+        self._countingEvent.set()
 
         self.countDownThread = Thread(target=self.countDown)
         self.countDownThread.start()
@@ -103,19 +104,20 @@ class Timer:
     
     def countDown(self):
         while(not self._stopThreadFlag):
-            self._pauseEvent.wait()
-            #self._countingEvent.clear()
-            time.sleep(Timer.timerStep)
-            if(not self._skipTimeFlag):
-                self._time = self._time - Timer.timerStep
-                self.updateTimerBar()
-                if(self.isNoTime()):
-                    self._timeOutEvent.set()
-                    self.pauseTimer()
-            else:
-                self._skipTimeFlag = False
+            self._pauseEvent.wait(Timer.__eventTimeOut)
+            if(self._pauseEvent.is_set()):
+                self._countingEvent.clear()
+                time.sleep(Timer.timerStep)
+                if(not self._skipTimeFlag):
+                    self._time = self._time - Timer.timerStep
+                    self.updateTimerBar()
+                    if(self.isNoTime()):
+                        self._timeOutEvent.set()
+                        self.pauseTimer()
+                else:
+                    self._skipTimeFlag = False
 
-            #self._countingEvent.set()
+                self._countingEvent.set()
             
         return
 
@@ -131,12 +133,13 @@ class Timer:
         return (self._time < (Timer.timerStep/2))
     
     def waitAndResetTimeOutEvent(self):
-        self._timeOutEvent.wait()
-        self._timeOutEvent.clear()
-        return
+        success = self._timeOutEvent.wait(Timer.__eventTimeOut)
+        if (self._timeOutEvent.is_set()):
+            self._timeOutEvent.clear()
+        return success
     
     def resetTimer(self):
-        #self._countingEvent.wait()
+        self._countingEvent.wait()
         self._time = self.maxTime
         self.timerBar['value'] = self._time
         self._style.configure(self._styleName, text="{:.1f}".format(self._time))
@@ -160,11 +163,11 @@ class Timer:
     #     self.countDownThread.start()
     #     return
     
-    # def stopTimer(self):
-    #     self._stopThreadFlag = True
-    #     return
+    def stopTimer(self):
+        self._stopThreadFlag = True
+        return
     
-    # def waitThreadFinish(self):
-    #     self.countDownThread.join()
-    #     return
+    def waitThreadFinish(self):
+        self.countDownThread.join()
+        return
 

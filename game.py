@@ -31,6 +31,11 @@ class Game:
     
      __numPlayers = 2
      __selectBoxImgPath = ["img/box1.png","img/box2.png"]
+     __startGameMsg = "Start the Game!"
+     __tieGameMsg = "Game is Tie."
+
+     def __winGameMsg(playerId):
+          return "Player{:d} Win!".format(playerId+1)
 
      def __init__(self, boardSize, winRequirement, timeLimit, addTime):
           self.winRequirement = winRequirement
@@ -57,14 +62,30 @@ class Game:
                          command=lambda info=self.players[i].id:self.placeStone(info)))
                
                self.players[i].initTimerBar(self.frm,600)
+
+          self.msgFrm = Frame(self.frm,bg="grey",padx=10,pady=10)
           
-          self.gameStartButton = Button(self.frm, text="Game Start!", width=20, command=self.gameStart)
-          self.gameStartButton['font'] = font.Font(family='Helvetica',size=30,weight="bold")
+          self.gameFinishMsg = StringVar()
+          self.gameFinishMsg.set(Game.__startGameMsg)
+          self.gameFinishLabel = Label(self.msgFrm, textvariable=self.gameFinishMsg, width=20, anchor="n",pady=50)
+          self.gameFinishLabel['font'] = font.Font(family='Helvetica',size=30,weight="bold")
+          self.gameFinishLabel.config(bg="grey")
+
+          self.gameStartButton = Button(self.msgFrm, text="Game Start!", width=12, command=self.gameStart)
+          self.gameStartButton['font'] = font.Font(family='Helvetica',size=20,weight="bold")
+
+          self.gameQuitButton = Button(self.msgFrm, text="Quit", width=10, command=self.quit)
+          self.gameQuitButton['font'] = font.Font(family='Helvetica',size=10,weight="bold")
+
 
           self.turn = 0
 
           self.initView()
-          self.startCheckTimeOutThread()
+          self.timeOutThreads = []
+          for i in range(Game.__numPlayers):
+               self.timeOutThreads.append(Thread(target=lambda id=self.players[i].id:self.timeOut(id)))
+               self.timeOutThreads[i].start()
+
           self.resetGame()
           return
      
@@ -94,12 +115,17 @@ Game:
           self.playersButton[0].grid(column=0,row=3,padx=0,pady=0)
           self.players[0].getTimerBar().grid(column=0,row=4,padx=0,pady=0)
 
-          self.gameStartButton.grid(row=2)
-          self.gameStartButton.lift()
+          self.msgFrm.grid(row=2)
+          Label(self.msgFrm,text=' ',width=10,bg="grey").grid(row=1,column=0) # for centering grid layout
+          self.msgFrm.lift()
+          
+          self.gameFinishLabel.grid(row=0,column=0,columnspan=3)
+          self.gameStartButton.grid(row=1,column=1)
+          self.gameQuitButton.grid(row=1,column=2)
 
 
-          #self.gameBoard.board[4][10] = 0
-          #self.gameBoard.board[5][10] = 0
+          #self.gameBoard.board[4][10] = 1
+          #self.gameBoard.board[5][10] = 1
           # self.gameBoard.board[12][10] = 0
           # self.gameBoard.board[14][0] = 0
           # self.gameBoard.board[2][5] = 1
@@ -149,38 +175,27 @@ Game:
           self.players[self.turn].resumeTimer()
           return
      
-
-     def startCheckTimeOutThread(self):
-          for i in range(Game.__numPlayers):
-               thread = Thread(target=lambda id=self.players[i].id:self.timeOut(id))
-               thread.start()
-          return
-     
      def timeOut(self,id):
           nextId = (id + 1) % 2
           while(not self.isGameQuit):
-               self.players[id].timer.waitAndResetTimeOutEvent()
-               self.canvas.delete(self.selectBox[id])
+               if(self.players[id].timer.waitAndResetTimeOutEvent()):
+                    self.canvas.delete(self.selectBox[id])
 
-               self.players[id].pauseTimer()
-               self.players[id].addTimerCount()
+                    self.players[id].pauseTimer()
+                    self.players[id].addTimerCount()
 
-               self.turn = nextId
-               self.players[nextId].resumeTimer()
+                    self.turn = nextId
+                    self.players[nextId].resumeTimer()
 
-               if(self.players[nextId].timer.isNoTime()):
-                    self.gameFinish()
-                    continue
-
-               
-
+                    if(self.players[nextId].timer.isNoTime()):
+                         self.gameFinish()
+                         continue
           return
      
      def resetGame(self):
-          time.sleep(2*Timer.timerStep) # temporary solution to last player timer still counting, leading to reduced maxtime
           self.turn = 0
           self.winPlayer = -1
-          self.gameStartButton.grid()
+          self.msgFrm.grid()
           for i in range(Game.__numPlayers):
                self.players[i].resetTimer()
                self.playersButton[i]['state'] = DISABLED
@@ -189,7 +204,7 @@ Game:
     
      def gameStart(self):
           self.players[self.turn].resumeTimer()
-          self.gameStartButton.grid_remove()
+          self.msgFrm.grid_remove()
           for i in range(Game.__numPlayers):
                self.playersButton[i]['state'] = NORMAL
 
@@ -200,16 +215,30 @@ Game:
                self.players[i].pauseTimer()
           if(self.winPlayer == -1):
                print("Game is tie.")
+               self.gameFinishMsg.set(Game.__tieGameMsg)
           else:
                print("Player " + str(self.winPlayer) + " win!")
+               self.gameFinishMsg.set(Game.__winGameMsg(self.winPlayer))
 
           self.resetGame()
+
+          return
+     
+     def quit(self):
+          self.isGameQuit = True
+          for i in range(Game.__numPlayers):
+               #self.players[i].timer._timeOutEvent.set()
+               self.players[i].timer.stopTimer()
+               self.players[i].timer.waitThreadFinish()
+               self.timeOutThreads[i].join()
+
+          self.root.destroy()
 
           return
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=3,addTime=0)
+game = Game(boardSize=15,winRequirement=3,timeLimit=3,addTime=0)
 #print(repr(game))
 #print(game)
 game.root.mainloop()
