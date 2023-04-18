@@ -32,7 +32,7 @@ class Game:
      __tieGameMsg = "Game is Tie."
 
      def __winGameMsg(playerId):
-          return "Player{:d} Win!".format(playerId+1)
+          return f"Player{playerId+1} Win!"
 
      def __init__(self, boardSize, winRequirement, timeLimit, addTime):
           self.winRequirement = winRequirement
@@ -121,16 +121,6 @@ Game:
           self.gameStartButton.grid(row=1,column=1)
           self.gameQuitButton.grid(row=1,column=2)
 
-
-          #self.gameBoard.board[4][10] = 1
-          #self.gameBoard.board[5][10] = 1
-          # self.gameBoard.board[12][10] = 0
-          # self.gameBoard.board[14][0] = 0
-          # self.gameBoard.board[2][5] = 1
-          # self.gameBoard.board[9][6] = 1
-          # self.gameBoard.board[11][11] = 1
-          # self.gameBoard.board[14][14] = 1
-
           self.gameBoard.displayBoard(self.canvas)
           return
 
@@ -150,10 +140,13 @@ Game:
           if(self.selectPos == None or playerId != self.turn):
                return
           
+          if(self.turn==1):
+               self.selectPos = self.gameBoard.getNextMove(1,0)
+          
           x = int(self.selectPos[0])
           y = int(self.selectPos[1])
-          if (self.gameBoard.board[y][x] == -1):
-               self.gameBoard.board[y][x] = playerId
+          if (self.gameBoard.at(x,y) == -1):
+               self.gameBoard.set(x,y,playerId)
                self.players[self.turn].getTimer().setSkipTimeFlag()
                self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(x,y))
                self.canvas.delete(self.selectBox[self.turn])
@@ -209,6 +202,19 @@ Game:
           for i in range(Game.__numPlayers):
                self.players[i].getTimer().resetTimer()
                self.playersButton[i]['state'] = DISABLED
+
+          #self.gameBoard.set(11,3,1)
+          #self.gameBoard.set(13,1,1)
+          #self.gameBoard.set(12,2,1)
+             
+          #self.gameBoard.set(2,5,1)
+          #self.gameBoard.set(2,6,1)
+          #self.gameBoard.set(2,7,1)
+          #self.gameBoard.set(2,8,1)
+          
+          #self.gameBoard.set(2,9,1)
+          # self.gameBoard.set(14,14,1)
+          self.gameBoard.displayBoard(self.canvas)
           return
 
     
@@ -227,7 +233,7 @@ Game:
                print("Game is tie.")
                self.gameFinishMsg.set(Game.__tieGameMsg)
           else:
-               print("Player " + str(self.winPlayer) + " win!")
+               print("Player " + str(self.winPlayer+1) + " win!")
                self.gameFinishMsg.set(Game.__winGameMsg(self.winPlayer))
 
           self.resetGame()
