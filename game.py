@@ -34,7 +34,7 @@ class Game:
      def __winGameMsg(playerId):
           return f"Player{playerId+1} Win!"
 
-     def __init__(self, boardSize, winRequirement, timeLimit, addTime):
+     def __init__(self, boardSize, winRequirement, timeLimit, addTime, computerPlayerId=-1):
           self.winRequirement = winRequirement
           self.isGameQuit = False
           self.winPlayer = -1
@@ -43,7 +43,6 @@ class Game:
           self.frm = ttk.Frame(self.root, width=700, height=650, padding=10)
           self.canvas = Canvas(self.frm,width=620,height=620)
 
-          self.selectPos = None
           self.selectBoxImg = [PhotoImage(file=Game.__selectBoxImgPath[0]),PhotoImage(file=Game.__selectBoxImgPath[1])]
           self.selectBox = [None,None]
           
@@ -52,13 +51,18 @@ class Game:
           self.players = []
           self.playersButton = []
           for i in range(Game.__numPlayers):
-               self.players.append(Player(i,timeLimit,addTime))
                self.playersButton.append(
                     Button(self.frm, text="Player"+str(i+1), 
                          fg="green" if(i==0) else "red", 
-                         command=lambda info=self.players[i].id:self.placeStone(info)))
+                         command=lambda id=i:self.placeStone(id)))
+               if(not computerPlayerId == -1 and i==computerPlayerId):
+                    self.players.append(Player(i,timeLimit,addTime,True,gameBoard=self.gameBoard, placeButton=self.playersButton[i]))
+               else:
+                    self.players.append(Player(i,timeLimit,addTime,False))
+               
                
                self.players[i].getTimer().initTimerBar(self.frm,600)
+          self.computerPlayerId = computerPlayerId
 
           self.msgFrm = Frame(self.frm,bg="grey",padx=10,pady=10)
           
@@ -131,27 +135,24 @@ Game:
           pos = self.gameBoard.coord2BoardPos([event.x,event.y])
           if (pos[0] >= self.gameBoard.size or pos[1] >= self.gameBoard.size):
                return
-          self.selectPos = pos
-          coord = self.gameBoard.boardPos2Coord(self.selectPos[0],self.selectPos[1])
+          self.players[self.turn].selectPos = pos
+          coord = self.gameBoard.boardPos2Coord(pos[0],pos[1])
           self.selectBox[self.turn] = self.canvas.create_image(coord,image=self.selectBoxImg[self.turn])
           return
 
      def placeStone(self,playerId):
-          if(self.selectPos == None or playerId != self.turn):
+          if(playerId != self.turn or len(self.players[self.turn].selectPos)==0):
                return
           
-          if(self.turn==1):
-               self.selectPos = self.gameBoard.getNextMove(1,0)
-          
-          x = int(self.selectPos[0])
-          y = int(self.selectPos[1])
+          x = int(self.players[self.turn].selectPos[0])
+          y = int(self.players[self.turn].selectPos[1])
           if (self.gameBoard.at(x,y) == -1):
                self.gameBoard.set(x,y,playerId)
                self.players[self.turn].getTimer().setSkipTimeFlag()
                self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(x,y))
                self.canvas.delete(self.selectBox[self.turn])
 
-               if(self.gameBoard.isPlayerWon(playerId,self.selectPos)):
+               if(self.gameBoard.isPlayerWon(playerId,self.players[self.turn].selectPos)):
                     self.winPlayer = playerId
                     self.gameFinish()
                     return
@@ -175,6 +176,8 @@ Game:
           self.players[self.turn].getTimer().addCountDownTime()
           self.turn = (self.turn + 1) % 2
           self.players[self.turn].getTimer().resumeTimer()
+          if(self.turn == self.computerPlayerId):
+               self.players[self.turn].startComputerPlayer()
           return
      
      def timeOut(self,id):
@@ -207,10 +210,10 @@ Game:
           #self.gameBoard.set(13,1,1)
           #self.gameBoard.set(12,2,1)
              
-          #self.gameBoard.set(2,5,1)
-          #self.gameBoard.set(2,6,1)
-          #self.gameBoard.set(2,7,1)
-          #self.gameBoard.set(2,8,1)
+          # self.gameBoard.set(2,5,1)
+          # self.gameBoard.set(2,6,1)
+          # self.gameBoard.set(2,7,1)
+          # self.gameBoard.set(2,8,1)
           
           #self.gameBoard.set(2,9,1)
           # self.gameBoard.set(14,14,1)
@@ -242,6 +245,7 @@ Game:
      
      def quit(self):
           self.isGameQuit = True
+          self.players[self.computerPlayerId].stopComputerPlayer()
           for i in range(Game.__numPlayers):
                self.players[i].getTimer().stopTimer()
                self.players[i].getTimer().waitThreadFinish()
@@ -253,7 +257,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5)
+game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5,computerPlayerId=1)
 #print(repr(game))
 #print(game)
 game.root.mainloop()
