@@ -191,6 +191,8 @@ Game:
 
                     self.turn = nextId
                     self.players[nextId].getTimer().resumeTimer()
+                    if(nextId == self.computerPlayerId):
+                         self.players[nextId].startComputerPlayer()
 
                     if(self.players[nextId].getTimer().isNoTime()):
                          self.gameFinish()
@@ -223,6 +225,8 @@ Game:
     
      def gameStart(self):
           self.players[self.turn].getTimer().resumeTimer()
+          if(self.turn == self.computerPlayerId):
+               self.players[self.turn].startComputerPlayer()
           self.msgFrm.grid_remove()
           for i in range(Game.__numPlayers):
                self.playersButton[i]['state'] = NORMAL
@@ -257,7 +261,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5,computerPlayerId=1)
+game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5,computerPlayerId=0)
 #print(repr(game))
 #print(game)
 game.root.mainloop()

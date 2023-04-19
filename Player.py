@@ -62,10 +62,11 @@ class Player:
         return
     
     def _computerPlayerThread(self,gameBoard,placeButton):
+        opponentId = (self.id+1)%2
         while(not self._stopComputerFlag):
             self._startComputerEvent.wait(Player.__eventTimeOut)
             if(self._startComputerEvent.is_set()):
-                self.selectPos = gameBoard.getNextMove(self.id,0)
+                self.selectPos = gameBoard.getNextMove(self.id,opponentId)
                 placeButton.invoke()
                 self._computerFinishEvent.set()
                 self._startComputerEvent.clear()
