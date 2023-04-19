@@ -39,6 +39,9 @@ class Board:
     __blackImgPath = "img/black.png"
     __boardImgStartCoord = np.asarray([21,23])
 
+    __PRINTMSG = False
+    __PRINTTIME = False
+
     _fourTargetList = []
     _threeOpentargetList = []
     _threeSpOppBltargetList = []
@@ -376,7 +379,8 @@ class Board:
         return
     
     def _connectFour(self,arr,pos,playerId):
-        start = time.perf_counter()
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that need only 1 stone to connect five or more stones
         # required array size: 1 +/- (winTarget-1)
         checkArr = self._getCheckArr(arr,pos)
@@ -385,11 +389,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._fourTargetList[playerId])):
             return True
         
-        print("Four time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Four time: ", (time.perf_counter()-start)*1000)
         return False
     
     def _connectOpenThree(self,arr,pos,playerId):
-        start = time.perf_counter()
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that need 1 stone to have unblocked connected four
         # required array size: 1 +/- (winTarget-1)
         checkArr = self._getCheckArr(arr,pos)
@@ -398,11 +404,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._threeOpentargetList[playerId])):
             return True
 
-        print("Open Three time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Open Three time: ", (time.perf_counter()-start)*1000)
         return False
     
-    def _connectSpecialBlockThreeOpp(self,arr,pos,playerId,opponentId):
-        start = time.perf_counter()
+    def _connectSpecialBlockThreeOpp(self,arr,pos,playerId):
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check special case of blocking opponent with an open three to make it a block four
         # required array size: 1 +/- (winTarget-1 + 2)
         checkArr = self._getCheckArr(arr,pos)
@@ -427,11 +435,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._threeSpOppBltargetList2[playerId])):
             return True
 
-        print("Special Block Three Opp time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Special Block Three Opp time: ", (time.perf_counter()-start)*1000)
         return False
 
-    def _connectBlockThree(self,arr,pos,playerId,opponentId):
-        start = time.perf_counter()
+    def _connectBlockThree(self,arr,pos,playerId):
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that can create block 4 (only have 1 position can make to connect 5)
         # required array size: 1 +/- (winTarget-1 + 1)
         checkArr = self._getCheckArr(arr,pos)
@@ -441,11 +451,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._threeBlTargetList[playerId])):
             return True
 
-        print("Block Three time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Block Three time: ", (time.perf_counter()-start)*1000)
         return False
     
     def _connectSpecialBlockThreePlayer(self,arr,pos,playerId):
-        start = time.perf_counter()
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check special case of reaching block four as player, that is not considered in normal block three
         # or not applicable to blocking opponent
         checkArr = self._getCheckArr(arr,pos)
@@ -469,11 +481,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._threeSpPlyBltargetList2[playerId])):
             return True
 
-        print("Special Block Three Player time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Special Block Three Player time: ", (time.perf_counter()-start)*1000)
         return False
     
     def _connectOpenTwo(self,arr,pos,playerId):
-        start = time.perf_counter()
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that need 1 stone to have unblocked connected four
         # required array size: 1 +/- (winTarget-1)
         checkArr = self._getCheckArr(arr,pos)
@@ -494,11 +508,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._twoOpentargetList2[playerId])):
             return True
 
-        print("Open Two time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Open Two time: ", (time.perf_counter()-start)*1000)
         return False
     
-    def _connectBlockTwo(self,arr,pos,playerId,opponentId):
-        start = time.perf_counter()
+    def _connectBlockTwo(self,arr,pos,playerId):
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that can create block 4 (only have 1 position can make to connect 5)
         # required array size: 1 +/- (winTarget-1 + 1)
         checkArr = self._getCheckArr(arr,pos)
@@ -509,11 +525,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._twoBlTargetList[playerId])):
             return True
 
-        print("Block Two time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Block Two time: ", (time.perf_counter()-start)*1000)
         return False
     
     def _connectOpenOne(self,arr,pos,playerId):
-        start = time.perf_counter()
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that need 1 stone to have unblocked connected four
         # required array size: 1 +/- (winTarget-1)
         checkArr = self._getCheckArr(arr,pos)
@@ -539,11 +557,13 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._oneOpentargetList2[playerId])):
             return True
         
-        print("Open One time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Open One time: ", (time.perf_counter()-start)*1000)
         return False
 
-    def _connectBlockOne(self,arr,pos,playerId,opponentId):
-        start = time.perf_counter()
+    def _connectBlockOne(self,arr,pos,playerId):
+        if(Board.__PRINTTIME):
+            start = time.perf_counter()
         # check cases that can create block 4 (only have 1 position can make to connect 5)
         # required array size: 1 +/- (winTarget-1 + 1)
         checkArr = self._getCheckArr(arr,pos)
@@ -553,7 +573,8 @@ class Board:
         if(self._checkAnyMatch(checkArr,Board._oneBlTargetList[playerId])):
             return True
         
-        print("Block One time: ", (time.perf_counter()-start)*1000)
+        if(Board.__PRINTTIME):
+            print("Block One time: ", (time.perf_counter()-start)*1000)
 
         return False
 
@@ -583,6 +604,7 @@ class Board:
         # computer player next move
         scoreBoard = np.zeros([self.size,self.size])
         selectedPos = None
+        start = time.perf_counter()
 
         # check whole board
         score = 0
@@ -590,88 +612,107 @@ class Board:
             for x in range(self.size):
                 if(self.at(x,y)==Board.__EMPTY):
                     for dir in Board.Direction:
-                        print()
-                        print()
-                        print()
+                        if(Board.__PRINTMSG or Board.__PRINTTIME):
+                            print()
+                            print()
+                            print()
+                        if(Board.__PRINTTIME):
+                            start2 = time.perf_counter()
+
                         arr,pos = self._getDirArrayAndPos(dir,[x,y],2)
                         #print(arr.size,pos)
 
                         # next play win, highest score
                         if(self._connectFour(arr,pos,playerId)):
-                            print("Four Player",x,y)
+                            if(Board.__PRINTMSG):
+                                print("Four Player",x,y)
                             score = score + 1000000
 
                         # need to block opponent win
                         elif(self._connectFour(arr,pos,opponentId)):
-                            print("Four Opp",x,y)
+                            if(Board.__PRINTMSG):
+                                print("Four Opp",x,y)
                             score = score + 100000
                         else:
                             # almost win with open three
                             if(self._connectOpenThree(arr,pos,playerId)):
-                                print("Open Three Player",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Open Three Player",x,y)
                                 score = score + 5000
 
                             # block opponent open three
                             if(self._connectOpenThree(arr,pos,opponentId)):
-                                print("Open Three Opp",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Open Three Opp",x,y)
                                 score = score + 4000
-                            if(self._connectSpecialBlockThreeOpp(arr,pos,playerId,opponentId)):
-                                print("Special Block Three Opp",x,y)
+                            if(self._connectSpecialBlockThreeOpp(arr,pos,opponentId)):
+                                if(Board.__PRINTMSG):
+                                    print("Special Block Three Opp",x,y)
                                 score = score + 3500
 
                             # force opponent to block
-                            if(self._connectBlockThree(arr,pos,playerId,opponentId)):
-                                print("Block 3 Player",x,y)
+                            if(self._connectBlockThree(arr,pos,playerId)):
+                                if(Board.__PRINTMSG):
+                                    print("Block 3 Player",x,y)
                                 score = score + 1000
                             if(self._connectSpecialBlockThreePlayer(arr,pos,playerId)):
-                                print("Special Block Three Player",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Special Block Three Player",x,y)
                                 score = score + 1000
                             if(self._connectOpenTwo(arr,pos,playerId)):
-                                print("Open Two Player",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Open Two Player",x,y)
                                 score = score + 1000
 
                             # prevent threat
                             if(self._connectOpenTwo(arr,pos,opponentId)):
-                                print("Open Two Opp",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Open Two Opp",x,y)
                                 score = score + 500
-                            if(self._connectBlockThree(arr,pos,opponentId,playerId)):
-                                print("Block 3 Opp",x,y)
+                            if(self._connectBlockThree(arr,pos,opponentId)):
+                                if(Board.__PRINTMSG):
+                                    print("Block 3 Opp",x,y)
                                 score = score + 500
 
                             # create a bit threat 
-                            if(self._connectBlockTwo(arr,pos,playerId,opponentId)):
-                                print("Block Two Player",x,y)
+                            if(self._connectBlockTwo(arr,pos,playerId)):
+                                if(Board.__PRINTMSG):
+                                    print("Block Two Player",x,y)
                                 score = score + 100
                             if(self._connectOpenOne(arr,pos,playerId)):
-                                print("Open One Player",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Open One Player",x,y)
                                 score = score + 100
 
                             
                             # prevent threat (conservative)
                             if(self._connectOpenOne(arr,pos,opponentId)):
-                                print("Open One Player",x,y)
+                                if(Board.__PRINTMSG):
+                                    print("Open One Player",x,y)
                                 score = score + 10
-                            if(self._connectBlockTwo(arr,pos,opponentId,playerId)):
-                                print("Block Two Opp",x,y)
+                            if(self._connectBlockTwo(arr,pos,opponentId)):
+                                if(Board.__PRINTMSG):
+                                    print("Block Two Opp",x,y)
                                 score = score + 10
 
                             # better than random
-                            if(self._connectBlockOne(arr,pos,playerId,opponentId)):
-                                print("Block One Player",x,y)
+                            if(self._connectBlockOne(arr,pos,playerId)):
+                                if(Board.__PRINTMSG):
+                                    print("Block One Player",x,y)
                                 score = score + 2
-                            if(self._connectBlockOne(arr,pos,opponentId,playerId)):
-                                print("Block One Opp",x,y)
+                            if(self._connectBlockOne(arr,pos,opponentId)):
+                                if(Board.__PRINTMSG):
+                                    print("Block One Opp",x,y)
                                 score = score + 1
                         
-
-
-
-                    #score = score + 1 #temp
-
+                        if(Board.__PRINTTIME):
+                            print("Each step time: ", (time.perf_counter()-start2)*1000)
 
                 scoreBoard[y][x] = score
-                score = 0    
+                score = 0 
 
+        print("Overall time: ", (time.perf_counter()-start))
+                
         selectedPos = np.unravel_index(scoreBoard.argmax(),scoreBoard.shape)
         selectedPos = np.flip(selectedPos)
         print("Done",selectedPos[0],selectedPos[1],scoreBoard[selectedPos[1]][selectedPos[0]])
