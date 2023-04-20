@@ -1,7 +1,8 @@
 import numpy as np
 from tkinter import PhotoImage
-from enum import Enum
+from enum import IntEnum
 import time
+from scipy import ndimage
 
 from sympy.utilities.iterables import multiset_permutations
 
@@ -24,7 +25,7 @@ class Board:
     
     """
 
-    class Direction(Enum):
+    class Direction(IntEnum):
         VERTICAL = 0    # 1. top-to-bottom
         HORIZONTAL = 1  # 2. left-to-right
         DOWNHILL = 2    # 3. top-left-to-bottom-right
@@ -601,6 +602,8 @@ class Board:
 
 # computer player (for connecting 5 stones for now)
     def getNextMove(self, playerId, opponentId):
+        f = open("check.txt","w")
+
         # computer player next move
         scoreBoard = np.zeros([self.size,self.size])
         selectedPos = None
@@ -610,6 +613,8 @@ class Board:
         score = 0
         for y in range(self.size):
             for x in range(self.size):
+                connectResult = np.zeros((4,14))
+                weight = np.asarray([5000,4000,3500,1000,1000,1000,500,500,100,100,10,10,5,4])
                 if(self.at(x,y)==Board.__EMPTY):
                     for dir in Board.Direction:
                         if(Board.__PRINTMSG or Board.__PRINTTIME):
@@ -634,82 +639,85 @@ class Board:
                                 print("Four Opp",x,y)
                             score = score + 100000
                         else:
-                            # almost win with open three
-                            if(self._connectOpenThree(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
-                                    print("Open Three Player",x,y)
-                                score = score + 5000
-
-                            # block opponent open three
-                            if(self._connectOpenThree(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
-                                    print("Open Three Opp",x,y)
-                                score = score + 4000
-                            if(self._connectSpecialBlockThreeOpp(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
-                                    print("Special Block Three Opp",x,y)
-                                score = score + 3500
-
-                            # force opponent to block
-                            if(self._connectBlockThree(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
-                                    print("Block 3 Player",x,y)
-                                score = score + 1000
-                            if(self._connectSpecialBlockThreePlayer(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
-                                    print("Special Block Three Player",x,y)
-                                score = score + 1000
-                            if(self._connectOpenTwo(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
-                                    print("Open Two Player",x,y)
-                                score = score + 1000
-
-                            # prevent threat
-                            if(self._connectOpenTwo(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
-                                    print("Open Two Opp",x,y)
-                                score = score + 500
-                            if(self._connectBlockThree(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
-                                    print("Block 3 Opp",x,y)
-                                score = score + 500
-
-                            # create a bit threat 
-                            if(self._connectBlockTwo(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
-                                    print("Block Two Player",x,y)
-                                score = score + 100
-                            if(self._connectOpenOne(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
-                                    print("Open One Player",x,y)
-                                score = score + 100
-
+                            connectResult[int(dir),:] = [
+                                self._connectOpenThree(arr,pos,playerId),               # almost win with open three
+                                self._connectOpenThree(arr,pos,opponentId),             # block opponent open three
+                                self._connectSpecialBlockThreeOpp(arr,pos,opponentId),
+                                self._connectBlockThree(arr,pos,playerId),              # force opponent to block
+                                self._connectSpecialBlockThreePlayer(arr,pos,playerId),
+                                self._connectOpenTwo(arr,pos,playerId),
+                                self._connectOpenTwo(arr,pos,opponentId),               # prevent threat
+                                self._connectBlockThree(arr,pos,opponentId),
+                                self._connectBlockTwo(arr,pos,playerId),                # create a bit threat 
+                                self._connectOpenOne(arr,pos,playerId),
+                                self._connectOpenOne(arr,pos,opponentId),               # prevent threat (conservative)
+                                self._connectBlockTwo(arr,pos,opponentId),
+                                self._connectBlockOne(arr,pos,playerId),                # better than random
+                                self._connectBlockOne(arr,pos,opponentId)
+                            ]
+                            #weight = np.asarray([5000,4000,3500,1000,1000,1000,500,500,100,100,10,10,5,4])
+                            #addScore = connectResult.dot(weight)
                             
-                            # prevent threat (conservative)
-                            if(self._connectOpenOne(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
-                                    print("Open One Player",x,y)
-                                score = score + 10
-                            if(self._connectBlockTwo(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
-                                    print("Block Two Opp",x,y)
-                                score = score + 10
+                            #score = score + addScore
 
-                            # better than random
-                            if(self._connectBlockOne(arr,pos,playerId)):
-                                if(Board.__PRINTMSG):
+                            if(Board.__PRINTMSG):  
+                                # almost win with open three
+                                if(connectResult[dir,0]):
+                                    print("Open Three Player",x,y)
+
+                                # block opponent open three
+                                if(connectResult[dir,1]):
+                                    print("Open Three Opp",x,y)
+                                if(connectResult[dir,2]):
+                                    print("Special Block Three Opp",x,y)
+
+                                # force opponent to block
+                                if(connectResult[dir,3]):
+                                    print("Block 3 Player",x,y)
+                                if(connectResult[dir,4]):
+                                    print("Special Block Three Player",x,y)
+                                if(connectResult[dir,5]):
+                                    print("Open Two Player",x,y)
+
+                                # prevent threat
+                                if(connectResult[dir,6]):
+                                    print("Open Two Opp",x,y)
+                                if(connectResult[dir,7]):
+                                    print("Block 3 Opp",x,y)
+
+                                # create a bit threat 
+                                if(connectResult[dir,8]):
+                                    print("Block Two Player",x,y)
+                                if(connectResult[dir,9]):
+                                    print("Open One Player",x,y)
+                                
+                                # prevent threat (conservative)
+                                if(connectResult[dir,10]):
+                                    print("Open One Player",x,y)
+                                if(connectResult[dir,11]):
+                                    print("Block Two Opp",x,y)
+
+                                # better than random
+                                if(connectResult[dir,12]):
                                     print("Block One Player",x,y)
-                                score = score + 2
-                            if(self._connectBlockOne(arr,pos,opponentId)):
-                                if(Board.__PRINTMSG):
+                                if(connectResult[dir,13]):
                                     print("Block One Opp",x,y)
-                                score = score + 1
                         
                         if(Board.__PRINTTIME):
                             print("Each step time: ", (time.perf_counter()-start2)*1000)
 
-                scoreBoard[y][x] = score
+                addScore = np.sum(connectResult.dot(weight))
+                scoreBoard[y][x] = score + addScore
                 score = 0 
+
+        # better to place closer to existing stones
+        beforeDilate = self.board[1:-1,1:-1] > -1
+        mask = ndimage.generate_binary_structure(2, 2)
+        for i in range(2):
+            afterDilate = ndimage.binary_dilation(beforeDilate,structure=mask).astype(int)
+            scoreBoard = scoreBoard + (afterDilate-beforeDilate)*(2-i)
+            beforeDilate = afterDilate
+        
 
         print("Overall time: ", (time.perf_counter()-start))
                 
@@ -717,5 +725,12 @@ class Board:
         selectedPos = np.flip(selectedPos)
         print("Done",selectedPos[0],selectedPos[1],scoreBoard[selectedPos[1]][selectedPos[0]])
         print(scoreBoard)
+        
+        # write in file for score checking (debug)
+        np.set_printoptions(suppress=True,threshold=np.inf,linewidth=np.inf)
+        a = scoreBoard.copy() - (self.board[1:-1,1:-1] > -1)
+        a = np.insert(np.insert(a,0,np.arange(15)+1,0),0,np.arange(16),1)
+        f.write(np.array2string(a))
+        f.close()
         return selectedPos
     
