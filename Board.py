@@ -611,10 +611,12 @@ class Board:
 
         # check whole board
         score = 0
+        bestScore = -1 # for debug
+        bestConnect = None # for debug
         for y in range(self.size):
             for x in range(self.size):
                 connectResult = np.zeros((4,14))
-                weight = np.asarray([5000,4000,3500,1000,1000,1000,500,500,100,100,10,10,5,4])
+                weight = np.asarray([5000,4000,3500,1000,1000,1000,600,600,100,100,10,10,5,4])
                 if(self.at(x,y)==Board.__EMPTY):
                     for dir in Board.Direction:
                         if(Board.__PRINTMSG or Board.__PRINTTIME):
@@ -655,7 +657,7 @@ class Board:
                                 self._connectBlockOne(arr,pos,playerId),                # better than random
                                 self._connectBlockOne(arr,pos,opponentId)
                             ]
-                            #weight = np.asarray([5000,4000,3500,1000,1000,1000,500,500,100,100,10,10,5,4])
+                            #weight = np.asarray([5000,4000,3500,1000,1000,1000,600,600,100,100,10,10,5,4])
                             #addScore = connectResult.dot(weight)
                             
                             #score = score + addScore
@@ -707,6 +709,18 @@ class Board:
                             print("Each step time: ", (time.perf_counter()-start2)*1000)
 
                 addScore = np.sum(connectResult.dot(weight))
+                temp = np.sum(connectResult,axis=0)
+                # # check 4-4, 4-3, 3-3 cases
+                # # player
+                # if(np.sum(connectResult[:,3:6]) > 1):
+                #     addScore = max(addScore,3400)
+                # # opponent
+                # if(np.sum(connectResult[:,6:8]) > 1):
+                #     addScore = max(addScore,3300)
+
+                if((score+addScore)>bestScore):
+                    bestScore = score+addScore
+                    bestConnect = connectResult.copy()
                 scoreBoard[y][x] = score + addScore
                 score = 0 
 
@@ -730,6 +744,9 @@ class Board:
         np.set_printoptions(suppress=True,threshold=np.inf,linewidth=np.inf)
         a = scoreBoard.copy() - (self.board[1:-1,1:-1] > -1)
         a = np.insert(np.insert(a,0,np.arange(15)+1,0),0,np.arange(16),1)
+        f.write("[4p,4o,3sbo,3bp,3sbp,2op,2oo,3bo,2bp,1op,1oo,2bo,1bp,1bo], [Vert,Hori,Down,Up]\n")
+        f.write(np.array2string(bestConnect))
+        f.write("\n")
         f.write(np.array2string(a))
         f.close()
         return selectedPos
