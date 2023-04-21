@@ -4,6 +4,7 @@ from tkinter import ttk
 from Board import Board
 from Player import Player
 from threading import *
+import numpy as np
 
 class Game:
      """
@@ -34,7 +35,7 @@ class Game:
      def __winGameMsg(playerId):
           return f"Player{playerId+1} Win!"
 
-     def __init__(self, boardSize, winRequirement, timeLimit, addTime, computerPlayerId=-1):
+     def __init__(self, boardSize, winRequirement, timeLimit, addTime):
           self.winRequirement = winRequirement
           self.isGameQuit = False
           self.winPlayer = -1
@@ -55,14 +56,11 @@ class Game:
                     Button(self.frm, text="Player"+str(i+1), 
                          fg="green" if(i==0) else "red", 
                          command=lambda id=i:self.placeStone(id)))
-               if(not computerPlayerId == -1 and i==computerPlayerId):
-                    self.players.append(Player(i,timeLimit,addTime,True,gameBoard=self.gameBoard, placeButton=self.playersButton[i]))
-               else:
-                    self.players.append(Player(i,timeLimit,addTime,False))
-               
-               
+               self.players.append(Player(i,timeLimit,addTime,self.playersButton[i]))
                self.players[i].getTimer().initTimerBar(self.frm,600)
-          self.computerPlayerId = computerPlayerId
+          self.computerPlayerId = 1
+          self.isVsComputer = BooleanVar()
+          self.isVsComputer.set(False)
 
           self.msgFrm = Frame(self.frm,bg="grey",padx=10,pady=10)
           
@@ -71,6 +69,18 @@ class Game:
           self.gameFinishLabel = Label(self.msgFrm, textvariable=self.gameFinishMsg, width=20, anchor="n",pady=50)
           self.gameFinishLabel['font'] = font.Font(family='Helvetica',size=30,weight="bold")
           self.gameFinishLabel.config(bg="grey")
+
+          self.checkVsComputer = Checkbutton(self.msgFrm,text="Vs Computer?",variable=self.isVsComputer, onvalue=True, offvalue=False, bg="grey",command=self.enableDisableComputerPlayer)
+          self.checkVsComputer['font'] = font.Font(family='Helvetica',size=15)
+          
+          self.computerPlayerFrm = Frame(self.msgFrm,bg="grey",highlightbackground="grey25",highlightthickness=2)
+          self.computerPlayerMsg = Label(self.computerPlayerFrm,text="Computer\nplayer as: ",pady=10)
+          self.computerPlayerMsg['font'] = font.Font(family='Helvetica',size=15)
+          self.computerPlayerMsg.config(bg="grey")
+          self.computerPlayerButton = [Button(self.computerPlayerFrm,text="Player1",relief=RAISED,command=lambda id=0:self.changeComputerPlayerSelection(id)),
+                                       Button(self.computerPlayerFrm,text="Player2",relief=SUNKEN,command=lambda id=1:self.changeComputerPlayerSelection(id))]
+          for child in self.computerPlayerFrm.winfo_children():
+               child.configure(state=DISABLED)
 
           self.gameStartButton = Button(self.msgFrm, text="Game Start!", width=12, command=self.gameStart)
           self.gameStartButton['font'] = font.Font(family='Helvetica',size=20,weight="bold")
@@ -122,13 +132,44 @@ Game:
           self.msgFrm.lift()
           
           self.gameFinishLabel.grid(row=0,column=0,columnspan=3)
-          self.gameStartButton.grid(row=1,column=1)
-          self.gameQuitButton.grid(row=1,column=2)
+          self.checkVsComputer.grid(row=1,columnspan=3)
+          self.computerPlayerFrm.grid(row=2,columnspan=3,pady=10)
+          self.gameStartButton.grid(row=3,column=1)
+          self.gameQuitButton.grid(row=3,column=2)
+
+          self.computerPlayerMsg.grid(row=0,column=0)
+          self.computerPlayerButton[0].grid(row=0,column=1)
+          self.computerPlayerButton[1].grid(row=0,column=2)
 
           self.gameBoard.displayBoard(self.canvas)
           return
 
 # UI button functions
+     def enableDisableComputerPlayer(self):
+          if(self.isVsComputer.get() == True):
+               # Enable frame
+               for child in self.computerPlayerFrm.winfo_children():
+                    child.config(state=NORMAL)
+               self.computerPlayerButton[self.computerPlayerId].config(state=DISABLED)
+               self.computerPlayerFrm.config(highlightbackground="black")
+          else:
+               # Disable frame
+               for child in self.computerPlayerFrm.winfo_children():
+                    child.config(state=DISABLED)
+               self.computerPlayerFrm.config(highlightbackground="grey25")
+               self.computerPlayerId = -1
+
+          return
+     
+     def changeComputerPlayerSelection(self,id):
+          thisId = id
+          nextId = (thisId+1)%2
+          self.computerPlayerId = thisId
+          
+          self.computerPlayerButton[nextId].config(relief=RAISED,state=NORMAL)
+          self.computerPlayerButton[thisId].config(relief=SUNKEN,state=DISABLED)
+          return
+
      def onBoardClick(self,event):
           if (self.selectBox[self.turn] != None):
                self.canvas.delete(self.selectBox[self.turn])
@@ -221,12 +262,20 @@ Game:
           # self.gameBoard.set(14,14,1)
           self.gameBoard.displayBoard(self.canvas)
           return
-
     
      def gameStart(self):
+          for i in range(Game.__numPlayers):
+               if(self.isVsComputer.get() == True and i==self.computerPlayerId):
+                    self.players[i].setComputerPlayer(self.gameBoard)
+               else:
+                    self.players[i].setNormalPlayer()
+
           self.players[self.turn].getTimer().resumeTimer()
           if(self.turn == self.computerPlayerId):
-               self.players[self.turn].startComputerPlayer()
+               #self.players[self.turn].startComputerPlayer()
+               # force computer player to place in center
+               self.players[self.turn].selectPos = np.asarray([self.gameBoard.size/2,self.gameBoard.size/2])
+               self.placeStone(self.computerPlayerId)
           self.msgFrm.grid_remove()
           for i in range(Game.__numPlayers):
                self.playersButton[i]['state'] = NORMAL
@@ -261,7 +310,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=30,addTime=5,computerPlayerId=0)
+game = Game(boardSize=15,winRequirement=5,timeLimit=60,addTime=15)
 #print(repr(game))
 #print(game)
 game.root.mainloop()

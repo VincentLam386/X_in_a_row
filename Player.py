@@ -23,18 +23,18 @@ class Player:
     """
     __eventTimeOut = 1
 
-    def __init__(self, id, maxTime, addTime, isComputer, gameBoard=None, placeButton=None):
+    def __init__(self, id, maxTime, addTime, placeButton):
         self.id = id
         self.timer = Timer(maxTime, addTime, id)
         self.selectPos = None
 
-        self.isComputer = isComputer
-        if(isComputer):
-            self._computerThread = Thread(target=lambda gb=gameBoard,bu=placeButton:self._computerPlayerThread(gb,bu))
-            self._computerThread.start()
-            self._stopComputerFlag = False
-            self._startComputerEvent = Event()
-            self._computerFinishEvent = Event()
+        # for computer player
+        self.isComputer = False
+        self._computerThread = None
+        self._placeButton = placeButton
+        self._stopComputerFlag = True
+        self._startComputerEvent = Event()
+        self._computerFinishEvent = Event()
         return
     
     def __str__(self):
@@ -52,6 +52,25 @@ class Player:
     
     def getTimerBar(self):
         return self.timer.timerBar
+    
+    def setNormalPlayer(self):
+        if(not self.isComputer):
+            return
+        self.stopComputerPlayer()
+        self._computerThread.join()
+        self._computerThread = None
+        self._stopComputerFlag = True
+        self.isComputer = False
+        return
+    
+    def setComputerPlayer(self,gameBoard):
+        if(self.isComputer):
+            return
+        self.isComputer = True
+        self._stopComputerFlag = False
+        self._computerThread = Thread(target=lambda gb=gameBoard,bu=self._placeButton:self._computerPlayerThread(gb,bu))
+        self._computerThread.start()
+        return
     
     def startComputerPlayer(self):
         self._startComputerEvent.set()
