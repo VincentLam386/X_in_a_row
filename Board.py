@@ -245,20 +245,24 @@ class Board:
     
     def _checkAnyMatch(self,arr,targetList):
         targetSize = targetList[0].size
-        loopSize = arr.size - targetSize + 1
-        # for i in range(loopSize):
-        #     for j in range(len(targetList)):
-        #         a = arr[i:(i+targetSize)]
-        #         b = targetList[j]
-        #         if(np.array_equal(arr[i:(i+targetSize)], targetList[j])):
-        #             return True
-        for i in range(loopSize):
-            a = arr[i:(i+targetSize)]
-            b = np.where((targetList == a).all(axis=1))
-            if(b[0].size > 0):
-                return True
+        if(arr.size < targetSize):
+            return False
+        arr = arr.astype('int32')
+        numSlices = arr.size - targetSize + 1
 
-        return False
+        # slower speed compare (about 1.1s)
+        # for i in range(numSlices):
+        #     a = arr[i:(i+targetSize)]
+        #     b = np.where((targetList == a).all(axis=1))
+        #     if(b[0].size > 0):
+        #         return True
+        # return False
+            
+        # faster speed compare (about 0.8s)
+        # get matrix of all sliced a = arr[i:(i+targetSize)]
+        slicedArr = np.lib.stride_tricks.as_strided(arr,shape=(numSlices,targetSize),strides=(4,4))
+        # compare all arrays by broadcasting
+        return (np.sum((targetList==slicedArr[:,None]).all(axis=2)) > 0)
     
     @classmethod
     def _findTargetList(self,mainList,singleEndList=None,doubleEndList=None):
@@ -709,17 +713,9 @@ class Board:
                                     print("Block One Opp",x,y)
                         
                         if(Board.__PRINTTIME):
-                            print("Each step time: ", (time.perf_counter()-start2)*1000)
+                            print("Each step time (ms): ", (time.perf_counter()-start2)*1000)
 
                 addScore = np.sum(connectResult.dot(weight))
-                temp = np.sum(connectResult,axis=0)
-                # # check 4-4, 4-3, 3-3 cases
-                # # player
-                # if(np.sum(connectResult[:,3:6]) > 1):
-                #     addScore = max(addScore,3400)
-                # # opponent
-                # if(np.sum(connectResult[:,6:8]) > 1):
-                #     addScore = max(addScore,3300)
 
                 if((score+addScore)>bestScore):
                     bestScore = score+addScore
@@ -733,8 +729,7 @@ class Board:
         for i in range(2):
             afterDilate = ndimage.binary_dilation(beforeDilate,structure=mask).astype(int)
             scoreBoard = scoreBoard + (afterDilate-beforeDilate)*(2-i)
-            beforeDilate = afterDilate
-        
+            beforeDilate = afterDilate        
 
         print("Overall time: ", (time.perf_counter()-start))
                 
