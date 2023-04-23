@@ -191,25 +191,33 @@ Game:
                # Enable frame
                for child in self.computerPlayerFrm.winfo_children():
                     child.config(state=NORMAL)
-               self.computerPlayerButton[self.computerPlayerId].config(state=DISABLED)
+               for i in range(Game.__numPlayers):
+                    if(self.computerPlayerButton[i].cget('relief')==SUNKEN):
+                         self.computerPlayerButton[i].config(state=DISABLED)
                self.computerPlayerFrm.config(highlightbackground="black")
           else:
                # Disable frame
                for child in self.computerPlayerFrm.winfo_children():
                     child.config(state=DISABLED)
                self.computerPlayerFrm.config(highlightbackground="grey25")
-               self.computerPlayerId = Game.__NO_COMPUTER
 
           return
      
      def changeComputerPlayerSelection(self,id):
           thisId = id
           nextId = Game._getAnotherPlayerId(thisId)
-          self.computerPlayerId = thisId
           
           self.computerPlayerButton[nextId].config(relief=RAISED,state=NORMAL)
           self.computerPlayerButton[thisId].config(relief=SUNKEN,state=DISABLED)
           return
+     
+     def getComputerPlayerId(self):
+          if(self.isVsComputer.get() == False):
+               return Game.__NO_COMPUTER
+          for i in range(Game.__numPlayers):
+               if(self.computerPlayerButton[i].cget('relief')==SUNKEN):
+                    return i
+          return Game.__NO_COMPUTER
 
      def onBoardClick(self,event):
           if (self.selectBox[self.turn] != None):
@@ -347,10 +355,10 @@ Game:
           return
     
      def startGame(self):
+          self.computerPlayerId = self.getComputerPlayerId()
           for i in range(Game.__numPlayers):
                if(self.isVsComputer.get() == True and i==self.computerPlayerId):
                     self.players[i].setComputerPlayer(self.gameBoard)
-                    self.computerPlayerId = i
                else:
                     self.players[i].setNormalPlayer()
 
@@ -407,7 +415,7 @@ Game:
 
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=3,addTime=0)
+game = Game(boardSize=15,winRequirement=5,timeLimit=150,addTime=20)
 #print(repr(game))
 #print(game)
 game.root.mainloop()
