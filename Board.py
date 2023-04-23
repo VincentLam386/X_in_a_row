@@ -305,63 +305,78 @@ class Board:
     
     @classmethod
     def _prepAllTargetList(self):
+        # Four
         four0TargetList = Board._findTargetList([0,0,0,0,Board.__CURPOS])
         four1TargetList = Board._findTargetList([1,1,1,1,Board.__CURPOS])
         Board._fourTargetList = [four0TargetList,four1TargetList]
 
+        # Open three
         threeOpen0targetList = Board._findTargetList([0,0,0,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
         threeOpen1targetList = Board._findTargetList([1,1,1,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
         Board._threeOpentargetList = [threeOpen0targetList,threeOpen1targetList]
         
-        threeSpOppBl0targetList = [np.asarray([0,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS]),
-                                            np.asarray([Board.__BORDER,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS])]
+        # Special block three opp
+        #   1. x_ooo_p or B_ooo_p
+        threeSpOppBl0targetList = [np.asarray([0,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS]),    
+                                   np.asarray([Board.__BORDER,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS])]
         threeSpOppBl0targetList = Board._duplicateArrInOppDir(threeSpOppBl0targetList)
         threeSpOppBl1targetList = [np.asarray([1,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS]),
-                                            np.asarray([Board.__BORDER,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS])]
+                                   np.asarray([Board.__BORDER,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS])]
         threeSpOppBl1targetList = Board._duplicateArrInOppDir(threeSpOppBl1targetList)
+        #   2. _oo_op or _o_oop
         threeSpOppBl0targetList2 = [np.asarray([Board.__EMPTY,1,1,Board.__EMPTY,1,Board.__CURPOS]),
-                                            np.asarray([Board.__EMPTY,1,Board.__EMPTY,1,1,Board.__CURPOS])]
+                                    np.asarray([Board.__EMPTY,1,Board.__EMPTY,1,1,Board.__CURPOS])]
         threeSpOppBl0targetList2 = Board._duplicateArrInOppDir(threeSpOppBl0targetList2)
         threeSpOppBl1targetList2 = [np.asarray([Board.__EMPTY,0,0,Board.__EMPTY,0,Board.__CURPOS]),
-                                            np.asarray([Board.__EMPTY,0,Board.__EMPTY,0,0,Board.__CURPOS])]
+                                    np.asarray([Board.__EMPTY,0,Board.__EMPTY,0,0,Board.__CURPOS])]
         threeSpOppBl1targetList2 = Board._duplicateArrInOppDir(threeSpOppBl1targetList2)
         Board._threeSpOppBltargetList = [threeSpOppBl0targetList,threeSpOppBl1targetList]
         Board._threeSpOppBltargetList2 = [threeSpOppBl0targetList2,threeSpOppBl1targetList2]
 
+        # Block three
         threeBl0TargetList = Board._findTargetList([0,0,0,Board.__CURPOS,Board.__EMPTY],singleEndList=[1,Board.__BORDER])
         threeBl1TargetList = Board._findTargetList([1,1,1,Board.__CURPOS,Board.__EMPTY],singleEndList=[0,Board.__BORDER])
         Board._threeBlTargetList = [threeBl0TargetList,threeBl1TargetList]
 
+        # Special block three player
+        #   1. _xxx_p
         threeSpPlyBl0targetList = [np.asarray([Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS])]
         threeSpPlyBl0targetList = Board._duplicateArrInOppDir(threeSpPlyBl0targetList)
         threeSpPlyBl1targetList = [np.asarray([Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS])]
         threeSpPlyBl1targetList = Board._duplicateArrInOppDir(threeSpPlyBl1targetList)
+        #   2. xx_xp or x_xxp
         threeSpPlyBl0targetList2 = [np.asarray([0,0,Board.__EMPTY,0,Board.__CURPOS]),
-                                            np.asarray([0,Board.__EMPTY,0,0,Board.__CURPOS])]
+                                    np.asarray([0,Board.__EMPTY,0,0,Board.__CURPOS])]
         threeSpPlyBl0targetList2 = Board._duplicateArrInOppDir(threeSpPlyBl0targetList2)
         threeSpPlyBl1targetList2 = [np.asarray([1,1,Board.__EMPTY,1,Board.__CURPOS]),
-                                            np.asarray([1,Board.__EMPTY,1,1,Board.__CURPOS])]
+                                    np.asarray([1,Board.__EMPTY,1,1,Board.__CURPOS])]
         threeSpPlyBl1targetList2 = Board._duplicateArrInOppDir(threeSpPlyBl1targetList2)
         Board._threeSpPlyBltargetList = [threeSpPlyBl0targetList,threeSpPlyBl1targetList]
         Board._threeSpPlyBltargetList2 = [threeSpPlyBl0targetList2,threeSpPlyBl1targetList2]
 
+        # Open two 
+        #   1. _xxp_
         twoOpen0targetList = Board._findTargetList([0,0,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
         twoOpen1targetList = Board._findTargetList([1,1,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
+        #   2. _xx_p_ or _xp_x_ or _px_x_
         twoOpen0targetList2 = [np.asarray([Board.__EMPTY,0,0,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]),
-                                  np.asarray([Board.__EMPTY,0,Board.__CURPOS,Board.__EMPTY,0,Board.__EMPTY]),
-                                  np.asarray([Board.__EMPTY,Board.__CURPOS,0,Board.__EMPTY,0,Board.__EMPTY])]
+                               np.asarray([Board.__EMPTY,0,Board.__CURPOS,Board.__EMPTY,0,Board.__EMPTY]),
+                               np.asarray([Board.__EMPTY,Board.__CURPOS,0,Board.__EMPTY,0,Board.__EMPTY])]
         twoOpen0targetList2 = Board._duplicateArrInOppDir(twoOpen0targetList2)
         twoOpen1targetList2 = [np.asarray([Board.__EMPTY,1,1,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]),
-                                  np.asarray([Board.__EMPTY,1,Board.__CURPOS,Board.__EMPTY,1,Board.__EMPTY]),
-                                  np.asarray([Board.__EMPTY,Board.__CURPOS,1,Board.__EMPTY,1,Board.__EMPTY])]
+                               np.asarray([Board.__EMPTY,1,Board.__CURPOS,Board.__EMPTY,1,Board.__EMPTY]),
+                               np.asarray([Board.__EMPTY,Board.__CURPOS,1,Board.__EMPTY,1,Board.__EMPTY])]
         twoOpen1targetList2 = Board._duplicateArrInOppDir(twoOpen1targetList2)
         Board._twoOpentargetList = [twoOpen0targetList,twoOpen1targetList]
         Board._twoOpentargetList2 = [twoOpen0targetList2,twoOpen1targetList2]
 
+        # Block two
         twoBl0TargetList = Board._findTargetList([0,0,Board.__CURPOS,Board.__EMPTY,Board.__EMPTY],singleEndList=[1,Board.__BORDER])
         twoBl1TargetList = Board._findTargetList([1,1,Board.__CURPOS,Board.__EMPTY,Board.__EMPTY],singleEndList=[0,Board.__BORDER])
         Board._twoBlTargetList = [twoBl0TargetList,twoBl1TargetList]
 
+        # Open one
+        #   1. _(xp_)_ and  2. _x_p_
         oneOpen0targetList = Board._findTargetList([0,Board.__CURPOS,Board.__EMPTY],doubleEndList=[Board.__EMPTY])
         oneOpen0targetListTemp = [np.asarray([Board.__EMPTY,0,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
         Board._duplicateArrInOppDir(oneOpen0targetListTemp)
@@ -370,6 +385,7 @@ class Board:
         oneOpen1targetListTemp = [np.asarray([Board.__EMPTY,1,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
         Board._duplicateArrInOppDir(oneOpen1targetListTemp)
         oneOpen1targetList = np.vstack((oneOpen1targetList, oneOpen1targetListTemp))
+        #   3. _x_ _p_
         oneOpen0targetList2 = [np.asarray([Board.__EMPTY,0,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
         oneOpen0targetList2 = Board._duplicateArrInOppDir(oneOpen0targetList2)
         oneOpen1targetList2 = [np.asarray([Board.__EMPTY,1,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
@@ -377,212 +393,31 @@ class Board:
         Board._oneOpentargetList = [oneOpen0targetList,oneOpen1targetList]
         Board._oneOpentargetList2 = [oneOpen0targetList2,oneOpen1targetList2]
 
+        # Block one
         oneBl0TargetList = Board._findTargetList([0,Board.__CURPOS,Board.__EMPTY,Board.__EMPTY,Board.__EMPTY],singleEndList=[1,Board.__BORDER])
         oneBl1TargetList = Board._findTargetList([1,Board.__CURPOS,Board.__EMPTY,Board.__EMPTY,Board.__EMPTY],singleEndList=[0,Board.__BORDER])
         Board._oneBlTargetList = [oneBl0TargetList,oneBl1TargetList]
 
         return
     
-    def _connectFour(self,arr,pos,playerId):
+    def _connectCheck(self,arr,pos,playerId,checkName,checkArrList):
         if(Board.__PRINTTIME):
             start = time.perf_counter()
-        # check cases that need only 1 stone to connect five or more stones
-        # required array size: 1 +/- (winTarget-1)
-        checkArr = self._getCheckArr(arr,pos)
-        # 3 cases: (current pos denote as p)
-        #targetList = self._findTargetList([playerId,playerId,playerId,playerId,Board.__CURPOS])
-        if(self._checkAnyMatch(checkArr,Board._fourTargetList[playerId])):
-            return True
-        
-        if(Board.__PRINTTIME):
-            print("Four time: ", (time.perf_counter()-start)*1000)
-        return False
-    
-    def _connectOpenThree(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check cases that need 1 stone to have unblocked connected four
-        # required array size: 1 +/- (winTarget-1)
-        checkArr = self._getCheckArr(arr,pos)
-        # 2 cases:
-        #targetList = self._findTargetList([playerId,playerId,playerId,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
-        if(self._checkAnyMatch(checkArr,Board._threeOpentargetList[playerId])):
-            return True
 
-        if(Board.__PRINTTIME):
-            print("Open Three time: ", (time.perf_counter()-start)*1000)
-        return False
-    
-    def _connectSpecialBlockThreeOpp(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check special case of blocking opponent with an open three to make it a block four
-        # required array size: 1 +/- (winTarget-1 + 2)
         checkArr = self._getCheckArr(arr,pos)
 
-        # 2 cases: (current pos denote as p)
-        # #   1. x_ooo_p or B_ooo_p
-        # targetList = []
-        # targetList.append(np.asarray([playerId,Board.__EMPTY,opponentId,opponentId,opponentId,Board.__EMPTY,Board.__CURPOS]))
-        # targetList.append(np.asarray([Board.__BORDER,Board.__EMPTY,opponentId,opponentId,opponentId,Board.__EMPTY,Board.__CURPOS]))
-        # self._duplicateArrInOppDir(targetList)
-        # if(self._checkAnyMatch(checkArr,targetList)):
-        #     return True
-        
-        # #   2. _xx_xp or _x_xxp or (flip) px_xx_ or pxx_x_
-        # targetList = []
-        # targetList.append(np.asarray([Board.__EMPTY,opponentId,opponentId,Board.__EMPTY,opponentId,Board.__CURPOS]))
-        # targetList.append(np.asarray([Board.__EMPTY,opponentId,Board.__EMPTY,opponentId,opponentId,Board.__CURPOS]))
-        # self._duplicateArrInOppDir(targetList)
-        if(self._checkAnyMatch(checkArr,Board._threeSpOppBltargetList[playerId])):
-            return True
-        
-        if(self._checkAnyMatch(checkArr,Board._threeSpOppBltargetList2[playerId])):
-            return True
+        match = False
+        for i in range(len(checkArrList)):
+            match = match or self._checkAnyMatch(checkArr,checkArrList[i][playerId])
 
         if(Board.__PRINTTIME):
-            print("Special Block Three Opp time: ", (time.perf_counter()-start)*1000)
-        return False
-
-    def _connectBlockThree(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check cases that can create block 4 (only have 1 position can make to connect 5)
-        # required array size: 1 +/- (winTarget-1 + 1)
-        checkArr = self._getCheckArr(arr,pos)
-        # n cases: (current pos denote as p)
-        #   1 block with unique multiset of 3 stones and 2 spaces (1 space is the current position) in both directions
-        #targetList = self._findTargetList([playerId,playerId,playerId,Board.__CURPOS,Board.__EMPTY],singleEndList=[opponentId,Board.__BORDER])
-        if(self._checkAnyMatch(checkArr,Board._threeBlTargetList[playerId])):
-            return True
-
-        if(Board.__PRINTTIME):
-            print("Block Three time: ", (time.perf_counter()-start)*1000)
-        return False
-    
-    def _connectSpecialBlockThreePlayer(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check special case of reaching block four as player, that is not considered in normal block three
-        # or not applicable to blocking opponent
-        checkArr = self._getCheckArr(arr,pos)
-
-        # 2 cases: (current pos denote as p)
-        #   1. _xxx_p or p_xxx_
-        # targetList = []
-        # targetList.append(np.asarray([Board.__EMPTY,playerId,playerId,playerId,Board.__EMPTY,Board.__CURPOS]))
-        # targetList.append(np.asarray([Board.__CURPOS,Board.__EMPTY,playerId,playerId,playerId,Board.__EMPTY]))
-        # if(self._checkAnyMatch(checkArr,targetList)):
-        #     return True
-
-        # #   2. xx_xp or x_xxp or px_xx or pxx_x
-        # targetList = []
-        # targetList.append(np.asarray([playerId,playerId,Board.__EMPTY,playerId,Board.__CURPOS]))
-        # targetList.append(np.asarray([playerId,Board.__EMPTY,playerId,playerId,Board.__CURPOS]))
-        # targetList.append(np.asarray([Board.__CURPOS,playerId,Board.__EMPTY,playerId,playerId]))
-        # targetList.append(np.asarray([Board.__CURPOS,playerId,playerId,Board.__EMPTY,playerId]))
-        if(self._checkAnyMatch(checkArr,Board._threeSpPlyBltargetList[playerId])):
-            return True
-        if(self._checkAnyMatch(checkArr,Board._threeSpPlyBltargetList2[playerId])):
-            return True
-
-        if(Board.__PRINTTIME):
-            print("Special Block Three Player time: ", (time.perf_counter()-start)*1000)
-        return False
-    
-    def _connectOpenTwo(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check cases that need 1 stone to have unblocked connected four
-        # required array size: 1 +/- (winTarget-1)
-        checkArr = self._getCheckArr(arr,pos)
-        # 2 cases:
-        #   1. _xxp_
-        # targetList = self._findTargetList([playerId,playerId,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
-        # if(self._checkAnyMatch(checkArr,targetList)):
-        #     return True
-        
-        # #   2. _xx_p_ or _xp_x_ or _px_x_ or (flip) 
-        # targetList = []
-        # targetList.append(np.asarray([Board.__EMPTY,playerId,playerId,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]))
-        # targetList.append(np.asarray([Board.__EMPTY,playerId,Board.__CURPOS,Board.__EMPTY,playerId,Board.__EMPTY]))
-        # targetList.append(np.asarray([Board.__EMPTY,Board.__CURPOS,playerId,Board.__EMPTY,playerId,Board.__EMPTY]))
-        # self._duplicateArrInOppDir(targetList)
-        if(self._checkAnyMatch(checkArr,Board._twoOpentargetList[playerId])):
-            return True
-        if(self._checkAnyMatch(checkArr,Board._twoOpentargetList2[playerId])):
-            return True
-
-        if(Board.__PRINTTIME):
-            print("Open Two time: ", (time.perf_counter()-start)*1000)
-        return False
-    
-    def _connectBlockTwo(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check cases that can create block 4 (only have 1 position can make to connect 5)
-        # required array size: 1 +/- (winTarget-1 + 1)
-        checkArr = self._getCheckArr(arr,pos)
-        # n cases: (current pos denote as p)
-        #   1 block with unique multiset of 3 stones and 2 spaces (1 space is the current position) in both directions
-        #targetList = self._findTargetList([playerId,playerId,Board.__CURPOS,Board.__EMPTY,Board.__EMPTY],singleEndList=[opponentId,Board.__BORDER])
-
-        if(self._checkAnyMatch(checkArr,Board._twoBlTargetList[playerId])):
-            return True
-
-        if(Board.__PRINTTIME):
-            print("Block Two time: ", (time.perf_counter()-start)*1000)
-        return False
-    
-    def _connectOpenOne(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check cases that need 1 stone to have unblocked connected four
-        # required array size: 1 +/- (winTarget-1)
-        checkArr = self._getCheckArr(arr,pos)
-        # 3 cases:
-        # #   1. _(xp_)_
-        # targetList = self._findTargetList([playerId,Board.__CURPOS,Board.__EMPTY],doubleEndList=[Board.__EMPTY])
-        # if(self._checkAnyMatch(checkArr,targetList)):
-        #     return True
-        
-        # #   2. _x_p_ or (flip)
-        # targetList = []
-        # targetList.append(np.asarray([Board.__EMPTY,playerId,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]))
-        # self._duplicateArrInOppDir(targetList)
-        # if(self._checkAnyMatch(checkArr,targetList)):
-        #     return True
-        
-        # #   3. _x_ _p_ or (flip) 
-        # targetList = []
-        # targetList.append(np.asarray([Board.__EMPTY,playerId,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]))
-        # self._duplicateArrInOppDir(targetList)
-        if(self._checkAnyMatch(checkArr,Board._oneOpentargetList[playerId])):
-            return True
-        if(self._checkAnyMatch(checkArr,Board._oneOpentargetList2[playerId])):
-            return True
-        
-        if(Board.__PRINTTIME):
-            print("Open One time: ", (time.perf_counter()-start)*1000)
-        return False
-
-    def _connectBlockOne(self,arr,pos,playerId):
-        if(Board.__PRINTTIME):
-            start = time.perf_counter()
-        # check cases that can create block 4 (only have 1 position can make to connect 5)
-        # required array size: 1 +/- (winTarget-1 + 1)
-        checkArr = self._getCheckArr(arr,pos)
-        # n cases: (current pos denote as p)
-        #   1 block with unique multiset of 3 stones and 2 spaces (1 space is the current position) in both directions
-        #targetList = self._findTargetList([playerId,Board.__CURPOS,Board.__EMPTY,Board.__EMPTY,Board.__EMPTY],singleEndList=[opponentId,Board.__BORDER])
-        if(self._checkAnyMatch(checkArr,Board._oneBlTargetList[playerId])):
-            return True
-        
-        if(Board.__PRINTTIME):
-            print("Block One time: ", (time.perf_counter()-start)*1000)
-
-        return False
-
+            timeMs = (time.perf_counter()-start)*1000
+            timeStr = checkName + " time(ms):"
+            print(f"{timeStr:<40}{timeMs:<20}")
+            
+        if(Board.__PRINTMSG and match):
+            print(checkName, "match")
+        return match
     
 # main game logics 
     def isPlayerWon(self,playerId,lastPlayCoord):
@@ -626,10 +461,8 @@ class Board:
                 weight = np.asarray([5000,4000,3500,1000,1000,1000,600,600,100,100,10,10,5,4])
                 if(self.at(x,y)==Board.__EMPTY):
                     for dir in Board.Direction:
-                        if(Board.__PRINTMSG or Board.__PRINTTIME):
-                            print()
-                            print()
-                            print()
+                        if(Board.__PRINTTIME):
+                            print("\n\n")
                         if(Board.__PRINTTIME):
                             start2 = time.perf_counter()
 
@@ -637,80 +470,50 @@ class Board:
                         #print(arr.size,pos)
 
                         # next play win, highest score
-                        if(self._connectFour(arr,pos,playerId)):
+                        if(self._connectCheck(arr,pos,playerId,"Four Player",[Board._fourTargetList])):
                             if(Board.__PRINTMSG):
                                 print("Four Player",x,y)
                             score = score + 1000000
-
                         # need to block opponent win
-                        elif(self._connectFour(arr,pos,opponentId)):
+                        elif(self._connectCheck(arr,pos,opponentId,"Four Opponent",[Board._fourTargetList])):
                             if(Board.__PRINTMSG):
                                 print("Four Opp",x,y)
                             score = score + 100000
                         else:
                             connectResult[int(dir),:] = [
-                                self._connectOpenThree(arr,pos,playerId),               # almost win with open three
-                                self._connectOpenThree(arr,pos,opponentId),             # block opponent open three
-                                self._connectSpecialBlockThreeOpp(arr,pos,opponentId),
-                                self._connectBlockThree(arr,pos,playerId),              # force opponent to block
-                                self._connectSpecialBlockThreePlayer(arr,pos,playerId),
-                                self._connectOpenTwo(arr,pos,playerId),
-                                self._connectOpenTwo(arr,pos,opponentId),               # prevent threat
-                                self._connectBlockThree(arr,pos,opponentId),
-                                self._connectBlockTwo(arr,pos,playerId),                # create a bit threat 
-                                self._connectOpenOne(arr,pos,playerId),
-                                self._connectOpenOne(arr,pos,opponentId),               # prevent threat (conservative)
-                                self._connectBlockTwo(arr,pos,opponentId),
-                                self._connectBlockOne(arr,pos,playerId),                # better than random
-                                self._connectBlockOne(arr,pos,opponentId)
-                            ]
-                            #weight = np.asarray([5000,4000,3500,1000,1000,1000,600,600,100,100,10,10,5,4])
-                            #addScore = connectResult.dot(weight)
-                            
-                            #score = score + addScore
-
-                            if(Board.__PRINTMSG):  
                                 # almost win with open three
-                                if(connectResult[dir,0]):
-                                    print("Open Three Player",x,y)
-
+                                self._connectCheck(arr,pos,playerId,    "Open Three Player",            [Board._threeOpentargetList]),
                                 # block opponent open three
-                                if(connectResult[dir,1]):
-                                    print("Open Three Opp",x,y)
-                                if(connectResult[dir,2]):
-                                    print("Special Block Three Opp",x,y)
-
+                                self._connectCheck(arr,pos,opponentId,  "Open Three Opponent",          [Board._threeOpentargetList]),          
+                                self._connectCheck(arr,pos,opponentId,  "Special Block Three Opponent", [Board._threeSpOppBltargetList,
+                                                                                                         Board._threeSpOppBltargetList2]),
                                 # force opponent to block
-                                if(connectResult[dir,3]):
-                                    print("Block 3 Player",x,y)
-                                if(connectResult[dir,4]):
-                                    print("Special Block Three Player",x,y)
-                                if(connectResult[dir,5]):
-                                    print("Open Two Player",x,y)
-
+                                self._connectCheck(arr,pos,playerId,    "Block Three Player",           [Board._threeBlTargetList]),
+                                self._connectCheck(arr,pos,playerId,    "Special Block Three Player",   [Board._threeSpPlyBltargetList,
+                                                                                                         Board._threeSpPlyBltargetList2]),
+                                self._connectCheck(arr,pos,playerId,    "Open Two Player",              [Board._twoOpentargetList,
+                                                                                                         Board._twoOpentargetList2]),
                                 # prevent threat
-                                if(connectResult[dir,6]):
-                                    print("Open Two Opp",x,y)
-                                if(connectResult[dir,7]):
-                                    print("Block 3 Opp",x,y)
-
+                                self._connectCheck(arr,pos,opponentId,  "Block Three Opponent",         [Board._threeBlTargetList]),
+                                self._connectCheck(arr,pos,opponentId,  "Open Two Opponent",            [Board._twoOpentargetList,                        
+                                                                                                         Board._twoOpentargetList2]),
                                 # create a bit threat 
-                                if(connectResult[dir,8]):
-                                    print("Block Two Player",x,y)
-                                if(connectResult[dir,9]):
-                                    print("Open One Player",x,y)
-                                
+                                self._connectCheck(arr,pos,playerId,    "Block Two Player",             [Board._twoBlTargetList]),
+                                self._connectCheck(arr,pos,playerId,    "Open One Player",              [Board._oneOpentargetList,
+                                                                                                         Board._oneOpentargetList2]),
                                 # prevent threat (conservative)
-                                if(connectResult[dir,10]):
-                                    print("Open One Player",x,y)
-                                if(connectResult[dir,11]):
-                                    print("Block Two Opp",x,y)
-
+                                self._connectCheck(arr,pos,opponentId,  "Block Two Opponent",           [Board._twoBlTargetList]),   
+                                self._connectCheck(arr,pos,opponentId,  "Open One Opponent",            [Board._oneOpentargetList,
+                                                                                                         Board._oneOpentargetList2]),
                                 # better than random
-                                if(connectResult[dir,12]):
-                                    print("Block One Player",x,y)
-                                if(connectResult[dir,13]):
-                                    print("Block One Opp",x,y)
+                                self._connectCheck(arr,pos,playerId,    "Block One Player",             [Board._oneBlTargetList]),
+                                self._connectCheck(arr,pos,opponentId,  "Block One Opponent",           [Board._oneBlTargetList]),   
+                            ]
+                            #weight = np.asarray([5000,  4000,3500,  1000,1000,1000,  600,600,  100,100,  10,10,  5,4])
+
+                            if(Board.__PRINTMSG): 
+                                if(np.sum(connectResult[int(dir),:]) > 0): 
+                                    print(x,y,"\n")
                         
                         if(Board.__PRINTTIME):
                             print("Each step time (ms): ", (time.perf_counter()-start2)*1000)
