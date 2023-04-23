@@ -101,8 +101,7 @@ class Timer:
     def resetTimer(self):
         self._countingEvent.wait()
         self._time = self.maxTime
-        self.timerBar['value'] = self._time
-        self._style.configure(self._styleName, text="{:.1f}".format(self._time))
+        self._updateTimerBar()
         self._timeOutEvent.clear()
         self.pauseTimer()
         return

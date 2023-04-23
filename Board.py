@@ -591,6 +591,9 @@ class Board:
       
         return False   
     
+    def isPosEmpty(self,x,y):
+        return (self.at(x,y)==Board.__EMPTY)
+    
     def ruleRenjuBoard(self):
         # prohibit black 3-and-3, 4-and-4, overline
 
