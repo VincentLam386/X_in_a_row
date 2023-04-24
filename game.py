@@ -81,6 +81,8 @@ class Game:
           self.computerPlayerId = Game.__NO_COMPUTER
           self.isVsComputer = BooleanVar()
           self.isVsComputer.set(False)
+          self.isBothComputer = BooleanVar()
+          self.isBothComputer.set(False)
 
           self.startFrm = Frame(self.frm,bg="grey",padx=10,pady=10)
           
@@ -90,7 +92,12 @@ class Game:
           self.gameFinishLabel['font'] = font.Font(family='Helvetica',size=30,weight="bold")
           self.gameFinishLabel.config(bg="grey")
 
-          self.checkVsComputer = Checkbutton(self.startFrm,text="Vs Computer?",variable=self.isVsComputer, onvalue=True, offvalue=False, bg="grey",command=self.enableDisableComputerPlayer)
+          self.checkBothComputer = Checkbutton(self.startFrm,text="Watch Computer Plays",variable=self.isBothComputer, 
+                                               onvalue=True, offvalue=False, bg="grey")
+          self.checkBothComputer['font'] = font.Font(family='Helvetica',size=15)
+
+          self.checkVsComputer = Checkbutton(self.startFrm,text="Vs Computer?",variable=self.isVsComputer, 
+                                             onvalue=True, offvalue=False, bg="grey",command=self.enableDisableComputerPlayer)
           self.checkVsComputer['font'] = font.Font(family='Helvetica',size=15)
           
           self.computerPlayerFrm = Frame(self.startFrm,bg="grey",highlightbackground="grey25",highlightthickness=2)
@@ -166,10 +173,11 @@ Game:
           self.startFrm.lift()
           
           self.gameFinishLabel.grid(row=0,column=0,columnspan=3)
-          self.checkVsComputer.grid(row=1,columnspan=3)
-          self.computerPlayerFrm.grid(row=2,columnspan=3,pady=10)
-          self.gameStartButton.grid(row=3,column=1)
-          self.gameQuitButton.grid(row=3,column=2)
+          self.checkBothComputer.grid(row=1,columnspan=3)
+          self.checkVsComputer.grid(row=2,columnspan=3)
+          self.computerPlayerFrm.grid(row=3,columnspan=3,pady=10)
+          self.gameStartButton.grid(row=4,column=1)
+          self.gameQuitButton.grid(row=4,column=2)
 
           self.computerPlayerMsg.grid(row=0,column=0)
           self.computerPlayerButton[0].grid(row=0,column=1)
@@ -304,7 +312,7 @@ Game:
           self.players[self.turn].getTimer().addCountDownTime()
           self.turn = Game._getAnotherPlayerId(self.turn)
           self.players[self.turn].getTimer().resumeTimer()
-          if(self.turn == self.computerPlayerId):
+          if(self.isBothComputer.get()==True or self.turn == self.computerPlayerId):
                self.players[self.turn].startComputerPlayer()
           return
      
@@ -323,7 +331,7 @@ Game:
                          continue
 
                     self.players[nextId].getTimer().resumeTimer()
-                    if(nextId == self.computerPlayerId):
+                    if(self.isBothComputer.get()==True or nextId == self.computerPlayerId):
                          self.players[nextId].startComputerPlayer()
                     
           return
@@ -357,18 +365,19 @@ Game:
      def startGame(self):
           self.computerPlayerId = self.getComputerPlayerId()
           for i in range(Game.__numPlayers):
-               if(self.isVsComputer.get() == True and i==self.computerPlayerId):
+               if(self.isBothComputer.get()==True or 
+                  (self.isVsComputer.get() == True and i==self.computerPlayerId)):
                     self.players[i].setComputerPlayer(self.gameBoard)
                else:
                     self.players[i].setNormalPlayer()
 
           self.resumeGame()
           self.startFrm.grid_remove()
-          if(self.turn == self.computerPlayerId):
+          if(self.isBothComputer.get()==True or self.turn == self.computerPlayerId):
                #self.players[self.turn].startComputerPlayer()
                # force computer player to place in center
                self.players[self.turn].selectPos = np.asarray([self.gameBoard.size/2,self.gameBoard.size/2])
-               self.placeStone(self.computerPlayerId)
+               self.placeStone(self.turn)
           
           return
      
@@ -403,7 +412,11 @@ Game:
      
      def quit(self):
           self.isGameQuit = True
-          self.players[self.computerPlayerId].stopComputerPlayer()
+          if(self.isBothComputer.get()==True):
+               self.players[0].stopComputerPlayer()
+               self.players[1].stopComputerPlayer()
+          elif(self.isVsComputer.get()==True):
+               self.players[self.computerPlayerId].stopComputerPlayer()
           for i in range(Game.__numPlayers):
                self.players[i].getTimer().stopTimer()
                self.players[i].getTimer().waitThreadFinish()
