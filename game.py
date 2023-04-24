@@ -6,6 +6,9 @@ from Player import Player
 from threading import *
 import numpy as np
 
+import datetime
+import time
+
 class Game:
      """
      A class to represent the gomoku game
@@ -83,6 +86,13 @@ class Game:
           self.isVsComputer.set(False)
           self.isBothComputer = BooleanVar()
           self.isBothComputer.set(False)
+          self.isRecordTime = BooleanVar()
+          self.isRecordTime.set(True)
+          self.startNoText = StringVar()
+          self.startNoText.set("0")
+          self.startCount = 0
+
+          self.timeFileName = "time.txt"
 
           self.startFrm = Frame(self.frm,bg="grey",padx=10,pady=10)
           
@@ -93,21 +103,32 @@ class Game:
           self.gameFinishLabel.config(bg="grey")
 
           self.checkBothComputer = Checkbutton(self.startFrm,text="Watch Computer Plays",variable=self.isBothComputer, 
-                                               onvalue=True, offvalue=False, bg="grey")
+                                               onvalue=True, offvalue=False, bg="grey",anchor="w")
           self.checkBothComputer['font'] = font.Font(family='Helvetica',size=15)
 
           self.checkVsComputer = Checkbutton(self.startFrm,text="Vs Computer?",variable=self.isVsComputer, 
-                                             onvalue=True, offvalue=False, bg="grey",command=self.enableDisableComputerPlayer)
+                                             onvalue=True, offvalue=False, bg="grey",anchor="w",command=self.enableDisableComputerPlayer)
           self.checkVsComputer['font'] = font.Font(family='Helvetica',size=15)
           
-          self.computerPlayerFrm = Frame(self.startFrm,bg="grey",highlightbackground="grey25",highlightthickness=2)
-          self.computerPlayerMsg = Label(self.computerPlayerFrm,text="Computer\nplayer as: ",pady=10)
+          self.computerPlayerFrm = Frame(self.startFrm,bg="grey",highlightbackground="grey25",highlightthickness=2,width=250,height=80)
+          self.computerPlayerFrm.grid_propagate(0)
+          self.computerPlayerMsg = Label(self.computerPlayerFrm,text="Computer\nplayer as: ",pady=10,bg="grey",anchor="w",justify=LEFT)
           self.computerPlayerMsg['font'] = font.Font(family='Helvetica',size=15)
-          self.computerPlayerMsg.config(bg="grey")
           self.computerPlayerButton = [Button(self.computerPlayerFrm,text="Player1",relief=RAISED,command=lambda id=0:self.changeComputerPlayerSelection(id)),
                                        Button(self.computerPlayerFrm,text="Player2",relief=SUNKEN,command=lambda id=1:self.changeComputerPlayerSelection(id))]
           for child in self.computerPlayerFrm.winfo_children():
                child.configure(state=DISABLED)
+
+          self.checkRecordTime = Checkbutton(self.startFrm,text="Record Time",variable=self.isRecordTime,
+                                             onvalue=True, offvalue=False,bg="grey",anchor="w")
+          self.checkRecordTime['font'] = font.Font(family='Helvetica',size=15)
+          self.autoStartFrm = Frame(self.startFrm,bg="grey",highlightbackground="black",highlightthickness=2,width=170,height=80)
+          self.autoStartFrm.grid_propagate(0)
+          self.autoStartLabel = Label(self.autoStartFrm,text="No. of\nauto start: ",pady=10,bg="grey",anchor="w",justify=LEFT)
+          self.autoStartLabel['font'] = font.Font(family='Helvetica',size=13)
+          self.startNoInputBox = Entry(self.autoStartFrm,width=4,font=('Helvetica 13'),textvariable=self.startNoText)
+          self.startNoEnterButton = Button(self.autoStartFrm,text="Enter",command=self.autoStartThreadStart)
+          self.startNextGameEvent = Event()
 
           self.gameStartButton = Button(self.startFrm, text="Game Start!", width=12, command=self.startGame)
           self.gameStartButton['font'] = font.Font(family='Helvetica',size=20,weight="bold")
@@ -173,15 +194,21 @@ Game:
           self.startFrm.lift()
           
           self.gameFinishLabel.grid(row=0,column=0,columnspan=3)
-          self.checkBothComputer.grid(row=1,columnspan=3)
-          self.checkVsComputer.grid(row=2,columnspan=3)
-          self.computerPlayerFrm.grid(row=3,columnspan=3,pady=10)
+          self.checkBothComputer.grid(row=1,column=1,sticky="W",padx=10)
+          self.checkVsComputer.grid(row=2,column=1,sticky="W",padx=10)
+          self.computerPlayerFrm.grid(row=3,column=1,pady=10,sticky="W",padx=10)
+          self.checkRecordTime.grid(row=2,column=2,sticky="W",padx=10)
+          self.autoStartFrm.grid(row=3,column=2,pady=10,sticky="W",padx=10)
           self.gameStartButton.grid(row=4,column=1)
           self.gameQuitButton.grid(row=4,column=2)
 
-          self.computerPlayerMsg.grid(row=0,column=0)
-          self.computerPlayerButton[0].grid(row=0,column=1)
-          self.computerPlayerButton[1].grid(row=0,column=2)
+          self.computerPlayerMsg.grid(row=0,column=0,padx=5)
+          self.computerPlayerButton[0].grid(row=0,column=1,padx=(15,0))
+          self.computerPlayerButton[1].grid(row=0,column=2,padx=(0,15))
+
+          self.autoStartLabel.grid(rowspan=2,column=0,padx=5)
+          self.startNoInputBox.grid(row=0,column=1,padx=5,pady=(15,3))
+          self.startNoEnterButton.grid(row=1,column=1,padx=5)
 
           self.msgFrm.grid(row=2,column=1)
           self.msgFrm.lift()
@@ -293,6 +320,11 @@ Game:
           self.gameFinish()
           return
      
+     def autoStartThreadStart(self):
+          self.startCount = int(self.startNoText.get())
+          Thread(target=self.autoStartThread).start()
+          return
+     
 # rules (to be implemented)
      def ruleRenju(self):
 
@@ -360,14 +392,17 @@ Game:
           #self.gameBoard.set(2,9,1)
           # self.gameBoard.set(14,14,1)
           self.gameBoard.displayBoard(self.canvas)
+          self.startNextGameEvent.set()
           return
     
      def startGame(self):
+          if(self.isRecordTime.get()==True):
+               self.startRecordTime()
           self.computerPlayerId = self.getComputerPlayerId()
           for i in range(Game.__numPlayers):
                if(self.isBothComputer.get()==True or 
                   (self.isVsComputer.get() == True and i==self.computerPlayerId)):
-                    self.players[i].setComputerPlayer(self.gameBoard)
+                    self.players[i].setComputerPlayer(self.gameBoard,self.isRecordTime.get())
                else:
                     self.players[i].setNormalPlayer()
 
@@ -399,6 +434,10 @@ Game:
      
      def gameFinish(self):
           self.stopGame()
+
+          if(self.isRecordTime.get()==True):
+               self.endRecordTime()
+
           if(self.winPlayer == Game.__TIE):
                print("Game is tie.")
                self.gameFinishMsg.set(Game.__tieGameMsg)
@@ -425,7 +464,34 @@ Game:
           self.root.destroy()
 
           return
-
+     
+     def decrementStartCount(self):
+          self.startCount = self.startCount - 1
+          self.startNoText.set(str(self.startCount))
+          return
+     
+     def autoStartThread(self):
+          while(self.startCount > 0):
+               self.startNextGameEvent.wait(1)
+               if(self.startNextGameEvent.is_set()):
+                    time.sleep(1)
+                    self.decrementStartCount()
+                    self.startNextGameEvent.clear()
+                    self.startGame()
+          return
+     
+     
+     def startRecordTime(self):
+          f = open(self.timeFileName,"a")
+          f.write(f"{datetime.datetime.now()} run: ")
+          f.close()
+          return
+     
+     def endRecordTime(self):
+          f = open(self.timeFileName,"a")
+          f.write("\n")
+          f.close()
+          return
 
 
 game = Game(boardSize=15,winRequirement=5,timeLimit=150,addTime=20)

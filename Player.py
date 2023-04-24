@@ -63,12 +63,12 @@ class Player:
         self.isComputer = False
         return
     
-    def setComputerPlayer(self,gameBoard):
+    def setComputerPlayer(self,gameBoard,isRecordTime):
         if(self.isComputer):
             return
         self.isComputer = True
         self._stopComputerFlag = False
-        self._computerThread = Thread(target=lambda gb=gameBoard,bu=self._placeButton:self._computerPlayerThread(gb,bu))
+        self._computerThread = Thread(target=lambda gb=gameBoard,bu=self._placeButton,rt=isRecordTime:self._computerPlayerThread(gb,bu,rt))
         self._computerThread.start()
         return
     
@@ -80,12 +80,12 @@ class Player:
         self._stopComputerFlag = True
         return
     
-    def _computerPlayerThread(self,gameBoard,placeButton):
+    def _computerPlayerThread(self,gameBoard,placeButton,isRecordTime):
         opponentId = (self.id+1)%2
         while(not self._stopComputerFlag):
             self._startComputerEvent.wait(Player.__eventTimeOut)
             if(self._startComputerEvent.is_set()):
-                self.selectPos = gameBoard.getNextMove(self.id,opponentId)
+                self.selectPos = gameBoard.getNextMove(self.id,opponentId,isRecordTime)
                 placeButton.invoke()
                 self._computerFinishEvent.set()
                 self._startComputerEvent.clear()

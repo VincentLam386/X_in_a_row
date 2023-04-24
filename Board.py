@@ -5,6 +5,7 @@ import time
 from scipy import ndimage
 
 from sympy.utilities.iterables import multiset_permutations
+import numpy.lib.stride_tricks as npst
 
 class Board:
     """
@@ -260,7 +261,7 @@ class Board:
             
         # faster speed compare (about 0.8s)
         # get matrix of all sliced a = arr[i:(i+targetSize)]
-        slicedArr = np.lib.stride_tricks.as_strided(arr,shape=(numSlices,targetSize),strides=(4,4))
+        slicedArr = npst.as_strided(arr,shape=(numSlices,targetSize),strides=(4,4))
         # compare all arrays by broadcasting
         return (np.sum((targetList==slicedArr[:,None]).all(axis=2)) > 0)
     
@@ -443,7 +444,7 @@ class Board:
         return
 
 # computer player (for connecting 5 stones for now)
-    def getNextMove(self, playerId, opponentId):
+    def getNextMove(self, playerId, opponentId, isRecordTime):
         f = open("check.txt","w")
 
         # computer player next move
@@ -534,7 +535,8 @@ class Board:
             scoreBoard = scoreBoard + (afterDilate-beforeDilate)*(2-i)
             beforeDilate = afterDilate        
 
-        print("Overall time: ", (time.perf_counter()-start))
+        overallTime = time.perf_counter()-start
+        print("Overall time: ", overallTime)
                 
         selectedPos = np.unravel_index(scoreBoard.argmax(),scoreBoard.shape)
         selectedPos = np.flip(selectedPos)
@@ -550,5 +552,10 @@ class Board:
         f.write("\n")
         f.write(np.array2string(a))
         f.close()
+        if(isRecordTime):
+            fTime = open("time.txt","a")
+            fTime.write(f"{overallTime:.6f} ")
+            print(f"{overallTime:.6f} ")
+            f.close()
         return selectedPos
     
