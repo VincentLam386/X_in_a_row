@@ -75,6 +75,8 @@ class Board:
             raise ValueError(f"Win requirement must be smaller than gameboard size. Input size = {size}, winRequirement = {winRequirement}")
         self._winTarget = winRequirement
 
+        self._tempPos = None
+
         if(winRequirement==5):
             Board._prepAllTargetList()
         return
@@ -119,16 +121,34 @@ class Board:
     def __repr__(self):
         return f"Board(size='{self.size}', winTarget='{self.winTarget}')"
     
-    def at(self,x,y):
-        if(x < 0 or y < 0 or x >= self.size or y >= self.size):
-            raise ValueError(f"Coordinate out of bound (from 0 to {self.size-1}) = {x,y}")
-        return self._board[y+1][x+1]
+    def at(self,pos):
+        if(pos[0] < 0 or pos[1] < 0 or pos[0] >= self.size or pos[1] >= self.size):
+            raise ValueError(f"Coordinate out of bound (from 0 to {self.size-1}) = {pos}")
+        return self._board[pos[1]+1][pos[0]+1]
     
-    def set(self,x,y,val):
-        if(x < 0 or y < 0 or x >= self.size or y >= self.size):
-            raise ValueError(f"Coordinate out of bound (from 0 to {self.size-1}) = {x,y}")
-        self._board[y+1][x+1] = val
+    def set(self,pos,val):
+        if(pos[0] < 0 or pos[1] < 0 or pos[0] >= self.size or pos[1] >= self.size):
+            raise ValueError(f"Coordinate out of bound (from 0 to {self.size-1}) = {pos}")
+        self._board[pos[1]+1][pos[0]+1] = val
         return
+    
+    def tempSet(self,pos,val):
+        if (self.isPosEmpty(pos)):
+            self.set(pos,val)
+            self._tempPos = pos
+        return
+    
+    def removeTemp(self):
+        if(self._tempPos==None):
+            self.set(self._tempPos,Board.__EMPTY)
+            self._tempPos = None
+        return
+    
+    def getBoard(self):
+        return self.board[1:-1,1:-1]
+    
+    def getHash(self):
+        return str(self.getBoard().reshape(self.size*self.size))
     
     def resetBoard(self):
         self._board = np.ones([self._actualSize,self._actualSize],dtype=np.int8)*Board.__EMPTY
@@ -145,13 +165,13 @@ class Board:
         return
 
 # Getting coordinates
-    def boardPos2Coord(self,x,y):
-        coord = Board.__boardImgStartCoord + np.asarray([x,y]) * self._pxStep
+    def boardPos2Coord(self,pos):
+        coord = Board.__boardImgStartCoord + np.asarray(pos) * self._pxStep
         return coord.tolist()
     
     def coord2BoardPos(self,coord):
         pos = (np.asarray(coord) - Board.__boardImgStartCoord) / self._pxStep
-        return np.rint(pos).tolist()
+        return np.rint(pos).astype(np.int8).tolist()
     
 # display graphics
     def displayStone(self, canvas, playerId, coord):
@@ -167,9 +187,9 @@ class Board:
 
         for y in range(self.size):
             for x in range(self.size):
-                if self.at(x,y)==Board.__EMPTY:
+                if self.at([x,y])==Board.__EMPTY:
                      continue
-                self.displayStone(canvas,self.at(x,y),self.boardPos2Coord(x,y))
+                self.displayStone(canvas,self.at([x,y]),self.boardPos2Coord([x,y]))
         return
     
     def _clearBoardDisplay(self,canvas):
@@ -414,21 +434,24 @@ class Board:
         return match
     
 # main game logics 
-    def isPlayerWon(self,playerId,lastPlayCoord):
+    def isPlayerWon(self,playerId,lastPlayPos):
         # Check 4 directions, each direction check +/- self.winTarget-1, total 2*self.winTarget-2 cells        
         for dir in Board.Direction:
-            arr,pos = self._getDirArrayAndPos(dir,lastPlayCoord,0)
+            arr,pos = self._getDirArrayAndPos(dir,lastPlayPos,0)
             found = Board._isNConnected(arr,pos,playerId,self.winTarget)
             if(found):  
                 return True
       
         return False   
     
-    def isBoardFilled(self):
-        return (np.where(self.board==Board.__EMPTY)[0].size==0)
+    def getEmptyPosArr(self):
+        return np.asarray(np.where(self.board==Board.__EMPTY)).T
     
-    def isPosEmpty(self,x,y):
-        return (self.at(x,y)==Board.__EMPTY)
+    def isBoardFilled(self):
+        return (self.getEmptyPosArr().shape[0]==0)
+    
+    def isPosEmpty(self,pos):
+        return (self.at(pos)==Board.__EMPTY)
     
     def ruleRenjuBoard(self):
         # prohibit black 3-and-3, 4-and-4, overline
@@ -456,7 +479,7 @@ class Board:
             for x in range(self.size):
                 connectResult = np.zeros((4,14))
                 weight = np.asarray([5000,4000,3500,1000,1000,1000,600,600,100,100,10,10,5,4])
-                if(self.at(x,y)==Board.__EMPTY):
+                if(self.at([x,y])==Board.__EMPTY):
                     for dir in Board.Direction:
                         if(Board.__PRINTTIME):
                             print("\n\n")
@@ -524,7 +547,7 @@ class Board:
                 score = 0 
 
         # better to place closer to existing stones
-        beforeDilate = self.board[1:-1,1:-1] > -1
+        beforeDilate = self.getBoard() > -1
         mask = ndimage.generate_binary_structure(2, 2)
         for i in range(Board.__DILATE_RANGE):
             afterDilate = ndimage.binary_dilation(beforeDilate,structure=mask).astype(int)
@@ -535,7 +558,7 @@ class Board:
         print("Overall time: ", overallTime)
                 
         selectedPos = np.unravel_index(scoreBoard.argmax(),scoreBoard.shape)
-        selectedPos = np.flip(selectedPos)
+        selectedPos = np.flip(selectedPos).astype(np.int8)
         print("Done",selectedPos[0],selectedPos[1],scoreBoard[selectedPos[1]][selectedPos[0]])
         print(scoreBoard)
         
@@ -553,5 +576,5 @@ class Board:
             fTime.write(f"{overallTime:.6f} ")
             print(f"{overallTime:.6f} ")
             f.close()
-        return selectedPos
+        return selectedPos.tolist()
     

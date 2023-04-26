@@ -261,7 +261,7 @@ Game:
           if (pos[0] >= self.gameBoard.size or pos[1] >= self.gameBoard.size):
                return
           self.players[self.turn].selectPos = pos
-          coord = self.gameBoard.boardPos2Coord(pos[0],pos[1])
+          coord = self.gameBoard.boardPos2Coord(pos)
           self.selectBox[self.turn] = self.canvas.create_image(coord,image=self.selectBoxImg[self.turn])
           return
 
@@ -269,12 +269,11 @@ Game:
           if(playerId != self.turn or len(self.players[self.turn].selectPos)==0):
                return
           
-          x = int(self.players[self.turn].selectPos[0])
-          y = int(self.players[self.turn].selectPos[1])
-          if (self.gameBoard.isPosEmpty(x,y)):
-               self.gameBoard.set(x,y,playerId)
+          selectPosLst = self.players[self.turn].selectPos
+          if (self.gameBoard.isPosEmpty(selectPosLst)):
+               self.gameBoard.set(selectPosLst,playerId)
                self.players[self.turn].getTimer().setSkipTimeFlag()
-               self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(x,y))
+               self.gameBoard.displayStone(self.canvas,playerId,self.gameBoard.boardPos2Coord(selectPosLst))
                self.canvas.delete(self.selectBox[self.turn])
 
                if(self.gameBoard.isPlayerWon(playerId,self.players[self.turn].selectPos)):
@@ -415,7 +414,7 @@ Game:
           if(self.isBothComputer.get()==True or self.turn == self.computerPlayerId):
                #self.players[self.turn].startComputerPlayer()
                # force computer player to place in center
-               self.players[self.turn].selectPos = np.asarray([self.gameBoard.size/2,self.gameBoard.size/2])
+               self.players[self.turn].selectPos = np.asarray([self.gameBoard.size/2,self.gameBoard.size/2],dtype=np.int8)
                self.placeStone(self.turn)
           
           return
