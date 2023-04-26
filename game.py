@@ -281,6 +281,10 @@ Game:
                     self.winPlayer = playerId
                     self.gameFinish()
                     return
+               if(self.gameBoard.isBoardFilled()):
+                    self.winPlayer = Game.__TIE
+                    self.gameFinish()
+                    return
 
                self.switchPlayers()
 
@@ -494,7 +498,7 @@ Game:
           return
 
 
-game = Game(boardSize=15,winRequirement=5,timeLimit=150,addTime=20)
+game = Game(boardSize=7,winRequirement=5,timeLimit=150,addTime=20)
 #print(repr(game))
 #print(game)
 game.root.mainloop()

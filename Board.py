@@ -424,6 +424,9 @@ class Board:
       
         return False   
     
+    def isBoardFilled(self):
+        return (np.where(self.board==Board.__EMPTY)[0].size==0)
+    
     def isPosEmpty(self,x,y):
         return (self.at(x,y)==Board.__EMPTY)
     
@@ -539,7 +542,7 @@ class Board:
         # write in file for score checking (debug)
         np.set_printoptions(suppress=True,threshold=np.inf,linewidth=np.inf)
         a = scoreBoard.copy() - (self.board[1:-1,1:-1] > -1)
-        a = np.insert(np.insert(a,0,np.arange(15)+1,0),0,np.arange(16),1)
+        a = np.insert(np.insert(a,0,np.arange(self.size)+1,0),0,np.arange(self.size+1),1)
         f.write("[4p,4o,3sbo,3bp,3sbp,2op,2oo,3bo,2bp,1op,1oo,2bo,1bp,1bo], [Vert,Hori,Down,Up]\n")
         f.write(np.array2string(bestConnect))
         f.write("\n")
