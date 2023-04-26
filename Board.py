@@ -44,6 +44,8 @@ class Board:
     __PRINTMSG = False
     __PRINTTIME = False
 
+    __DILATE_RANGE = 2
+
     _fourTargetList = []
     _threeOpentargetList = []
     _threeSpOppBltargetList = []
@@ -129,7 +131,7 @@ class Board:
         return
     
     def resetBoard(self):
-        self._board = np.ones([self._actualSize,self._actualSize],dtype='i')*Board.__EMPTY
+        self._board = np.ones([self._actualSize,self._actualSize],dtype=np.int8)*Board.__EMPTY
         self._board[0,:] = Board.__BORDER
         self._board[:,0] = Board.__BORDER
         self._board[self._actualSize-1,:] = Board.__BORDER
@@ -195,7 +197,7 @@ class Board:
             startX = max(0,-diff)
             startY = max(0,diff)
             arrSize = size - abs(diff)
-            arr = np.empty(arrSize)
+            arr = np.empty(arrSize,dtype=np.int8)
             for i in range(arrSize):
                 arr[i] = self._board[startY+i][startX+i]
             pos = actualPos[0] - startX
@@ -204,7 +206,7 @@ class Board:
             startX = max(0,actualPos[0] - yDiff)
             startY = min(size-1,actualPos[0]+actualPos[1])
             arrSize = abs(startX-startY)+1
-            arr = np.empty(arrSize)
+            arr = np.empty(arrSize,dtype=np.int8)
             for i in range(arrSize):
                 arr[i] = self._board[startY-i][startX+i]
             pos = actualPos[0] - startX
@@ -248,7 +250,7 @@ class Board:
         targetSize = targetList[0].size
         if(arr.size < targetSize):
             return False
-        arr = arr.astype('int32')
+        arr = arr.astype(np.int8)
         numSlices = arr.size - targetSize + 1
 
         # slower speed compare (about 1.1s)
@@ -261,7 +263,7 @@ class Board:
             
         # faster speed compare (about 0.8s)
         # get matrix of all sliced a = arr[i:(i+targetSize)]
-        slicedArr = npst.as_strided(arr,shape=(numSlices,targetSize),strides=(4,4))
+        slicedArr = npst.as_strided(arr,shape=(numSlices,targetSize),strides=(1,1))
         # compare all arrays by broadcasting
         return (np.sum((targetList==slicedArr[:,None]).all(axis=2)) > 0)
     
@@ -273,19 +275,19 @@ class Board:
         for i in range(len(targetListBase)):
             if(not singleEndList == None):
                 for j in range(len(singleEndList)):
-                    tempArr = np.insert(np.array(targetListBase[i],dtype='i'),0,singleEndList[j])
+                    tempArr = np.insert(np.array(targetListBase[i],dtype=np.int8),0,singleEndList[j])
                     targetList.append(tempArr)
-                    tempArr = np.append(np.array(targetListBase[i],dtype='i'),singleEndList[j])
+                    tempArr = np.append(np.array(targetListBase[i],dtype=np.int8),singleEndList[j])
                     targetList.append(tempArr)
             if(not doubleEndList == None):
                 for j in range(len(doubleEndList)):
-                    tempArr = np.insert(np.array(targetListBase[i],dtype='i'),0,doubleEndList[j])
+                    tempArr = np.insert(np.array(targetListBase[i],dtype=np.int8),0,doubleEndList[j])
                     tempArr = np.append(tempArr,doubleEndList[j])
                     targetList.append(tempArr)
             if(singleEndList == None and doubleEndList == None):
-                tempArr = np.array(targetListBase[i],dtype='i')
+                tempArr = np.array(targetListBase[i],dtype=np.int8)
                 targetList.append(tempArr)
-        targetList = np.asarray(targetList)
+        targetList = np.asarray(targetList,dtype=np.int8)
         print("         Target List time: ", (time.perf_counter()-start2)*1000)
 
         return targetList
@@ -296,11 +298,11 @@ class Board:
         for i in range(initiallen):
             arrList.append(np.flip(arrList[i]))
 
-        arr2D = np.asarray(arrList)
+        arr2D = np.asarray(arrList,np.int8)
         return arr2D
     
     def _getCheckArr(self,arr,pos):
-        checkArr = np.array(arr)
+        checkArr = np.array(arr) # make a copy, instead of asarray
         checkArr[pos] = Board.__CURPOS
         return checkArr
     
@@ -318,18 +320,18 @@ class Board:
         
         # Special block three opp
         #   1. x_ooo_p or B_ooo_p
-        threeSpOppBl0targetList = [np.asarray([0,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS]),    
-                                   np.asarray([Board.__BORDER,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS])]
+        threeSpOppBl0targetList = [np.asarray([0,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS],dtype=np.int8),    
+                                   np.asarray([Board.__BORDER,Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS],dtype=np.int8)]
         threeSpOppBl0targetList = Board._duplicateArrInOppDir(threeSpOppBl0targetList)
-        threeSpOppBl1targetList = [np.asarray([1,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS]),
-                                   np.asarray([Board.__BORDER,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS])]
+        threeSpOppBl1targetList = [np.asarray([1,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS],dtype=np.int8),
+                                   np.asarray([Board.__BORDER,Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS],dtype=np.int8)]
         threeSpOppBl1targetList = Board._duplicateArrInOppDir(threeSpOppBl1targetList)
         #   2. _oo_op or _o_oop
-        threeSpOppBl0targetList2 = [np.asarray([Board.__EMPTY,1,1,Board.__EMPTY,1,Board.__CURPOS]),
-                                    np.asarray([Board.__EMPTY,1,Board.__EMPTY,1,1,Board.__CURPOS])]
+        threeSpOppBl0targetList2 = [np.asarray([Board.__EMPTY,1,1,Board.__EMPTY,1,Board.__CURPOS],dtype=np.int8),
+                                    np.asarray([Board.__EMPTY,1,Board.__EMPTY,1,1,Board.__CURPOS],dtype=np.int8)]
         threeSpOppBl0targetList2 = Board._duplicateArrInOppDir(threeSpOppBl0targetList2)
-        threeSpOppBl1targetList2 = [np.asarray([Board.__EMPTY,0,0,Board.__EMPTY,0,Board.__CURPOS]),
-                                    np.asarray([Board.__EMPTY,0,Board.__EMPTY,0,0,Board.__CURPOS])]
+        threeSpOppBl1targetList2 = [np.asarray([Board.__EMPTY,0,0,Board.__EMPTY,0,Board.__CURPOS],dtype=np.int8),
+                                    np.asarray([Board.__EMPTY,0,Board.__EMPTY,0,0,Board.__CURPOS],dtype=np.int8)]
         threeSpOppBl1targetList2 = Board._duplicateArrInOppDir(threeSpOppBl1targetList2)
         Board._threeSpOppBltargetList = [threeSpOppBl0targetList,threeSpOppBl1targetList]
         Board._threeSpOppBltargetList2 = [threeSpOppBl0targetList2,threeSpOppBl1targetList2]
@@ -341,16 +343,16 @@ class Board:
 
         # Special block three player
         #   1. _xxx_p
-        threeSpPlyBl0targetList = [np.asarray([Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS])]
+        threeSpPlyBl0targetList = [np.asarray([Board.__EMPTY,0,0,0,Board.__EMPTY,Board.__CURPOS],dtype=np.int8)]
         threeSpPlyBl0targetList = Board._duplicateArrInOppDir(threeSpPlyBl0targetList)
-        threeSpPlyBl1targetList = [np.asarray([Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS])]
+        threeSpPlyBl1targetList = [np.asarray([Board.__EMPTY,1,1,1,Board.__EMPTY,Board.__CURPOS],dtype=np.int8)]
         threeSpPlyBl1targetList = Board._duplicateArrInOppDir(threeSpPlyBl1targetList)
         #   2. xx_xp or x_xxp
-        threeSpPlyBl0targetList2 = [np.asarray([0,0,Board.__EMPTY,0,Board.__CURPOS]),
-                                    np.asarray([0,Board.__EMPTY,0,0,Board.__CURPOS])]
+        threeSpPlyBl0targetList2 = [np.asarray([0,0,Board.__EMPTY,0,Board.__CURPOS],dtype=np.int8),
+                                    np.asarray([0,Board.__EMPTY,0,0,Board.__CURPOS],dtype=np.int8)]
         threeSpPlyBl0targetList2 = Board._duplicateArrInOppDir(threeSpPlyBl0targetList2)
-        threeSpPlyBl1targetList2 = [np.asarray([1,1,Board.__EMPTY,1,Board.__CURPOS]),
-                                    np.asarray([1,Board.__EMPTY,1,1,Board.__CURPOS])]
+        threeSpPlyBl1targetList2 = [np.asarray([1,1,Board.__EMPTY,1,Board.__CURPOS],dtype=np.int8),
+                                    np.asarray([1,Board.__EMPTY,1,1,Board.__CURPOS],dtype=np.int8)]
         threeSpPlyBl1targetList2 = Board._duplicateArrInOppDir(threeSpPlyBl1targetList2)
         Board._threeSpPlyBltargetList = [threeSpPlyBl0targetList,threeSpPlyBl1targetList]
         Board._threeSpPlyBltargetList2 = [threeSpPlyBl0targetList2,threeSpPlyBl1targetList2]
@@ -360,13 +362,13 @@ class Board:
         twoOpen0targetList = Board._findTargetList([0,0,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
         twoOpen1targetList = Board._findTargetList([1,1,Board.__CURPOS],doubleEndList=[Board.__EMPTY])
         #   2. _xx_p_ or _xp_x_ or _px_x_
-        twoOpen0targetList2 = [np.asarray([Board.__EMPTY,0,0,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]),
-                               np.asarray([Board.__EMPTY,0,Board.__CURPOS,Board.__EMPTY,0,Board.__EMPTY]),
-                               np.asarray([Board.__EMPTY,Board.__CURPOS,0,Board.__EMPTY,0,Board.__EMPTY])]
+        twoOpen0targetList2 = [np.asarray([Board.__EMPTY,0,0,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY],dtype=np.int8),
+                               np.asarray([Board.__EMPTY,0,Board.__CURPOS,Board.__EMPTY,0,Board.__EMPTY],dtype=np.int8),
+                               np.asarray([Board.__EMPTY,Board.__CURPOS,0,Board.__EMPTY,0,Board.__EMPTY],dtype=np.int8)]
         twoOpen0targetList2 = Board._duplicateArrInOppDir(twoOpen0targetList2)
-        twoOpen1targetList2 = [np.asarray([Board.__EMPTY,1,1,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY]),
-                               np.asarray([Board.__EMPTY,1,Board.__CURPOS,Board.__EMPTY,1,Board.__EMPTY]),
-                               np.asarray([Board.__EMPTY,Board.__CURPOS,1,Board.__EMPTY,1,Board.__EMPTY])]
+        twoOpen1targetList2 = [np.asarray([Board.__EMPTY,1,1,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY],dtype=np.int8),
+                               np.asarray([Board.__EMPTY,1,Board.__CURPOS,Board.__EMPTY,1,Board.__EMPTY],dtype=np.int8),
+                               np.asarray([Board.__EMPTY,Board.__CURPOS,1,Board.__EMPTY,1,Board.__EMPTY],dtype=np.int8)]
         twoOpen1targetList2 = Board._duplicateArrInOppDir(twoOpen1targetList2)
         Board._twoOpentargetList = [twoOpen0targetList,twoOpen1targetList]
         Board._twoOpentargetList2 = [twoOpen0targetList2,twoOpen1targetList2]
@@ -379,17 +381,17 @@ class Board:
         # Open one
         #   1. _(xp_)_ and  2. _x_p_
         oneOpen0targetList = Board._findTargetList([0,Board.__CURPOS,Board.__EMPTY],doubleEndList=[Board.__EMPTY])
-        oneOpen0targetListTemp = [np.asarray([Board.__EMPTY,0,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
+        oneOpen0targetListTemp = [np.asarray([Board.__EMPTY,0,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY],dtype=np.int8)]
         Board._duplicateArrInOppDir(oneOpen0targetListTemp)
         oneOpen0targetList = np.vstack((oneOpen0targetList, oneOpen0targetListTemp))
         oneOpen1targetList = Board._findTargetList([1,Board.__CURPOS,Board.__EMPTY],doubleEndList=[Board.__EMPTY])
-        oneOpen1targetListTemp = [np.asarray([Board.__EMPTY,1,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
+        oneOpen1targetListTemp = [np.asarray([Board.__EMPTY,1,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY],dtype=np.int8)]
         Board._duplicateArrInOppDir(oneOpen1targetListTemp)
         oneOpen1targetList = np.vstack((oneOpen1targetList, oneOpen1targetListTemp))
         #   3. _x_ _p_
-        oneOpen0targetList2 = [np.asarray([Board.__EMPTY,0,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
+        oneOpen0targetList2 = [np.asarray([Board.__EMPTY,0,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY],dtype=np.int8)]
         oneOpen0targetList2 = Board._duplicateArrInOppDir(oneOpen0targetList2)
-        oneOpen1targetList2 = [np.asarray([Board.__EMPTY,1,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY])]
+        oneOpen1targetList2 = [np.asarray([Board.__EMPTY,1,Board.__EMPTY,Board.__EMPTY,Board.__CURPOS,Board.__EMPTY],dtype=np.int8)]
         oneOpen1targetList2 = Board._duplicateArrInOppDir(oneOpen1targetList2)
         Board._oneOpentargetList = [oneOpen0targetList,oneOpen1targetList]
         Board._oneOpentargetList2 = [oneOpen0targetList2,oneOpen1targetList2]
@@ -530,9 +532,9 @@ class Board:
         # better to place closer to existing stones
         beforeDilate = self.board[1:-1,1:-1] > -1
         mask = ndimage.generate_binary_structure(2, 2)
-        for i in range(2):
+        for i in range(Board.__DILATE_RANGE):
             afterDilate = ndimage.binary_dilation(beforeDilate,structure=mask).astype(int)
-            scoreBoard = scoreBoard + (afterDilate-beforeDilate)*(2-i)
+            scoreBoard = scoreBoard + (afterDilate-beforeDilate)*(Board.__DILATE_RANGE-i)
             beforeDilate = afterDilate        
 
         overallTime = time.perf_counter()-start
