@@ -220,16 +220,13 @@ class Board:
         return [arr,pos]
     
     @classmethod
-    def _isNConnected(self,arr,pos,playerId,n,excludeCur=False,leftOfPos=None):
+    def _isNConnected(self,arr,pos,playerId,n):
         if (arr.size < n):
-            return [False,None]
+            return False
         
         connected = 0
-        extraCheck = 1 if excludeCur else 0
-        checkStart = max(0,pos - n + 1 - extraCheck)
-        if(leftOfPos==True): # known n connected found on left, start checking on right instead
-            checkStart = pos+1
-        checkEnd = min(arr.size,pos + n + extraCheck)
+        checkStart = max(0,pos - n + 1)
+        checkEnd = min(arr.size,pos + n)
 
         for i in range(checkStart,checkEnd):
             if(arr[i]==playerId):
@@ -237,14 +234,8 @@ class Board:
             else:
                 connected = 0
             if(connected==n):
-                if(not leftOfPos==None):
-                    if(i<pos):
-                        leftOfPos = True
-                    else:
-                        leftOfPos = False
-                return [True,leftOfPos]
-
-        return [False,leftOfPos]
+                return True
+        return False
     
     def _checkAnyMatch(self,arr,targetList):
         targetSize = targetList[0].size
@@ -427,7 +418,7 @@ class Board:
         # Check 4 directions, each direction check +/- self.winTarget-1, total 2*self.winTarget-2 cells        
         for dir in Board.Direction:
             arr,pos = self._getDirArrayAndPos(dir,lastPlayCoord,0)
-            found,_ = Board._isNConnected(arr,pos,playerId,self.winTarget)
+            found = Board._isNConnected(arr,pos,playerId,self.winTarget)
             if(found):  
                 return True
       
