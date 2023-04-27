@@ -99,7 +99,7 @@ class Timer:
         return
     
     def resetTimer(self):
-        self._countingEvent.wait()
+        self._countingEvent.wait(5)
         self._time = self.maxTime
         self._updateTimerBar()
         self._timeOutEvent.clear()
